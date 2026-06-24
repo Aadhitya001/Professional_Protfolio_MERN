@@ -1,0 +1,47 @@
+[
+  {
+    "description": [
+      "Lead frontend development of a high-traffic SaaS dashboard, increasing page load speed by 40%.",
+      "Architected reusable component libraries using React and custom CSS variables, saving developers 15+ hours weekly.",
+      "Mentored 4 junior engineers and introduced automated testing processes."
+    ],
+    "type": "work",
+    "title": "Senior Software Engineer",
+    "company": "Vortex Labs",
+    "location": "San Francisco, CA",
+    "duration": "2024 - Present",
+    "_id": "g7uvrfo",
+    "createdAt": "2026-06-23T13:44:14.633Z",
+    "updatedAt": "2026-06-23T13:44:14.633Z"
+  },
+  {
+    "description": [
+      "Built and maintained Express.js REST APIs serving over 50,000 active users.",
+      "Integrated secure payment handling gateways and dynamic user authentication.",
+      "Optimized database queries in MongoDB, reducing server response times by 25%."
+    ],
+    "type": "work",
+    "title": "Full Stack Developer",
+    "company": "Nexa Solutions",
+    "location": "Remote",
+    "duration": "2022 - 2024",
+    "_id": "53n3a0c",
+    "createdAt": "2026-06-23T13:44:14.634Z",
+    "updatedAt": "2026-06-23T13:44:14.634Z"
+  },
+  {
+    "description": [
+      "Specialized in Software Engineering and Database Architectures.",
+      "Graduated with Honors, GPA: 3.8/4.0.",
+      "Developed a web-based campus event manager as a senior capstone project."
+    ],
+    "type": "education",
+    "title": "B.S. in Computer Science",
+    "company": "State University",
+    "location": "Boston, MA",
+    "duration": "2018 - 2022",
+    "_id": "t64l4br",
+    "createdAt": "2026-06-23T13:44:14.634Z",
+    "updatedAt": "2026-06-23T13:44:14.634Z"
+  }
+]

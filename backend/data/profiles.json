@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Alex Mercer",
+    "title": "Full Stack Engineer & UI/UX Designer",
+    "bio": "Crafting responsive, high-performance web applications with modern design systems.",
+    "bioDetails": "I am a Software Engineer based in San Francisco, specialized in React, Node.js, and MongoDB. I focus on creating accessible, user-centric experiences, using clean architecture and optimized front-end systems.",
+    "profileImage": "/uploads/file-1782295713903-784380180.png",
+    "resumeUrl": "/uploads/file-1782295726364-985493786.pdf",
+    "email": "alex.mercer@example.com",
+    "github": "https://github.com",
+    "linkedin": "www.linkedin.com/in/ aadhithiyan-v-9b03a322b",
+    "instagram": "https://instagram.com",
+    "location": "San Francisco, CA",
+    "_id": "q6i9cpw",
+    "createdAt": "2026-06-23T13:44:14.616Z",
+    "updatedAt": "2026-06-24T10:10:54.855Z"
+  }
+]
