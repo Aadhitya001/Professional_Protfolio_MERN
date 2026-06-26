@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: portfolio-backend
+    env: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: "5000"
