@@ -23,6 +23,7 @@ function RequireAdmin({ children }) {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  // Allow any logged-in user to access admin portal
+  // Only allow admin users
+  if (!user.isAdmin) return <div style={{ padding: '2rem' }}>🚫 You are not authorized to view this page.</div>;
   return children;
 }
