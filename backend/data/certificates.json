@@ -53,5 +53,16 @@
     "_id": "n1tvje1",
     "createdAt": "2026-06-24T03:58:39.495Z",
     "updatedAt": "2026-06-24T03:59:23.293Z"
+  },
+  {
+    "name": "delloite",
+    "issuer": "Delloite Company",
+    "date": "07.07.2026",
+    "image": "/uploads/file-1784131062334-47311188.jpeg",
+    "verificationUrl": "",
+    "category": "Data Analysis",
+    "_id": "epa04sx",
+    "createdAt": "2026-07-15T15:56:58.958Z",
+    "updatedAt": "2026-07-15T15:57:45.613Z"
   }
 ]

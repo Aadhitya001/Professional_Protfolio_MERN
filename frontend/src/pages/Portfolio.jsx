@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   Sun, Moon, Menu, X, Github, Linkedin, Instagram, Mail, 
   MapPin, Briefcase, GraduationCap, ArrowRight, 
   Code, Server, Wrench, Send, ExternalLink, Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const DEFAULT_PROFILE = {
   name: 'Alex Mercer',
@@ -59,6 +60,14 @@ const DEFAULT_EXPERIENCES = [
 ];
 
 export default function Portfolio() {
+  const { logout } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (logout) {
+      logout();
+    }
+  }, [logout]);
+
   const getInitialTheme = () => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) return savedTheme;
@@ -287,7 +296,7 @@ export default function Portfolio() {
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
-            <Link to="/admin" className="theme-toggle" title="Admin Login" aria-label="Admin Dashboard" style={{ display: 'none' }}>
+            <Link to="/admin" className="theme-toggle" title="Admin Login" aria-label="Admin Dashboard">
                 <Shield size={20} />
               </Link>
 

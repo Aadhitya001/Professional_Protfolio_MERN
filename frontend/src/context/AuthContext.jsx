@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('portfolio_user');
+    const storedUser = sessionStorage.getItem('portfolio_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -17,12 +17,12 @@ export const AuthProvider = ({ children }) => {
   const login = (data) => {
     const userData = { ...data, isAdmin: data._id === 'admin' };
     setUser(userData);
-    localStorage.setItem('portfolio_user', JSON.stringify(userData));
+    sessionStorage.setItem('portfolio_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('portfolio_user');
+    sessionStorage.removeItem('portfolio_user');
   };
 
   return (
