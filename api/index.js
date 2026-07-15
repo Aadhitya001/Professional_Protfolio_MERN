@@ -34,4 +34,8 @@ app.use('/api/messages', protect, messageRoutes);
 app.use('/api/upload', protect, uploadRoutes);
 app.use('/api/certificates', protect, certificateRoutes);
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 export default app;

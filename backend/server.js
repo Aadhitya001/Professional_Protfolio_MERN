@@ -33,6 +33,10 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/certificates', certificateRoutes);
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 app.use('/uploads', express.static(path.resolve('uploads')));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
