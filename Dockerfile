@@ -2,15 +2,19 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files and install root deps (concurrently)
+# Copy package files for dependency installation
 COPY package*.json ./
-RUN npm ci
+COPY backend/package*.json ./backend/
+COPY frontend/package*.json ./frontend/
 
-# Install backend and frontend deps
-WORKDIR /app/backend
+# Install dependencies
 RUN npm ci
-WORKDIR /app/frontend
-RUN npm ci
+RUN cd backend && npm ci
+RUN cd frontend && npm ci
+
+# Copy the rest of the application source code
+COPY backend ./backend
+COPY frontend ./frontend
 
 # Build the frontend
 WORKDIR /app/frontend

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: portfolio-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  portfolio-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/portfolio
+      - JWT_SECRET=${JWT_SECRET:-supersecrettoken123}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-AdminPassword123}
+      - NODE_ENV=production
+    volumes:
+      - uploads_data:/app/backend/uploads
+
+volumes:
+  mongodb_data:
+    driver: local
+  uploads_data:
+    driver: local

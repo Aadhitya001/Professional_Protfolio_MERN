@@ -1,6 +1,7 @@
 import express from 'express';
 import Message from '../models/Message.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { sendConfirmationEmail } from '../utils/sendEmail.js';
 
 const router = express.Router();
 
@@ -12,6 +13,10 @@ router.post('/', async (req, res) => {
 
   try {
     const newMessage = await Message.create({ name, email, subject, message, contactNumber });
+    
+    // Send confirmation email (must be awaited in serverless environments to prevent freezing)
+    await sendConfirmationEmail(email, name, subject, message);
+    
     res.status(201).json(newMessage);
   } catch (error) {
     res.status(500).json({ message: error.message });

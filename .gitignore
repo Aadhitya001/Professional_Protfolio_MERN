@@ -2,3 +2,6 @@ node_modules
 .vercel
 frontend/dist/
 backend/uploads/
+.env*
+scratch/
+test-email.js

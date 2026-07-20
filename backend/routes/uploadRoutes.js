@@ -1,28 +1,12 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const UPLOAD_DIR = path.resolve('uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (req, file, cb) => {
-    // Keep unique name with original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
+// Configure storage using memory storage
+const storage = multer.memoryStorage();
 
 // Configure file filters
 const fileFilter = (req, file, cb) => {
@@ -51,9 +35,9 @@ router.post('/', protect, upload.single('file'), (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
     
-    // Construct the file URL (backend runs on port 5000)
-    // Note: Since Vite proxy forwards '/api' requests, the frontend can access uploads via /uploads/filename
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Convert file buffer to base64 data URL
+    const base64Data = req.file.buffer.toString('base64');
+    const fileUrl = `data:${req.file.mimetype};base64,${base64Data}`;
     
     res.status(200).json({
       message: 'File uploaded successfully',

@@ -7,6 +7,15 @@ import {
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
+const ensureAbsoluteUrl = (url) => {
+  if (!url) return '';
+  let cleanUrl = url.trim().replace(/\s+/g, '');
+  if (!/^https?:\/\//i.test(cleanUrl)) {
+    cleanUrl = 'https://' + cleanUrl;
+  }
+  return cleanUrl;
+};
+
 const DEFAULT_PROFILE = {
   name: 'Alex Mercer',
   title: 'Full Stack Engineer & UI/UX Designer',
@@ -85,6 +94,7 @@ export default function Portfolio() {
   const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
   const [certificates, setCertificates] = useState([]);
   const [certFilter, setCertFilter] = useState('All');
+  const [pageLoading, setPageLoading] = useState(true);
   
   const [filter, setFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -129,62 +139,37 @@ export default function Portfolio() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const startTime = Date.now();
       try {
-        const profileRes = await fetch('/api/profile');
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          setProfile(profileData);
-        }
-      } catch (err) {
-        console.log('Using default profile due to backend connection.');
-      }
-
-      try {
-        const projectsRes = await fetch('/api/projects');
-        if (projectsRes.ok) {
-          const projectsData = await projectsRes.json();
-          if (projectsData && projectsData.length > 0) {
-            setProjects(projectsData);
+        const res = await fetch('/api/portfolio-data');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile && Object.keys(data.profile).length > 0) {
+            setProfile(data.profile);
+          }
+          if (data.projects && data.projects.length > 0) {
+            setProjects(data.projects);
+          }
+          if (data.skills && data.skills.length > 0) {
+            setSkills(data.skills);
+          }
+          if (data.experiences && data.experiences.length > 0) {
+            setExperiences(data.experiences);
+          }
+          if (data.certificates && data.certificates.length > 0) {
+            setCertificates(data.certificates);
           }
         }
       } catch (err) {
-        console.log('Backend projects not loaded.');
-      }
-
-      try {
-        const skillsRes = await fetch('/api/skills');
-        if (skillsRes.ok) {
-          const skillsData = await skillsRes.json();
-          if (skillsData && skillsData.length > 0) {
-            setSkills(skillsData);
-          }
-        }
-      } catch (err) {
-        console.log('Backend skills not loaded.');
-      }
-
-      try {
-        const expRes = await fetch('/api/experience');
-        if (expRes.ok) {
-          const expData = await expRes.json();
-          if (expData && expData.length > 0) {
-            setExperiences(expData);
-          }
-        }
-      } catch (err) {
-        console.log('Backend experience not loaded.');
-      }
-
-      try {
-        const certsRes = await fetch('/api/certificates');
-        if (certsRes.ok) {
-          const certsData = await certsRes.json();
-          if (certsData && certsData.length > 0) {
-            setCertificates(certsData);
-          }
-        }
-      } catch (err) {
-        console.log('Backend certificates not loaded.');
+        console.error('Error fetching portfolio data:', err);
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const minimumDelay = 3000; // 3 seconds minimum loading animation duration
+        const remainingDelay = Math.max(0, minimumDelay - elapsed);
+        
+        setTimeout(() => {
+          setPageLoading(false);
+        }, remainingDelay);
       }
     };
     
@@ -215,8 +200,15 @@ export default function Portfolio() {
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
-    setFormLoading(true);
     setFormStatus(null);
+    
+    // Validate contact number (must be exactly 10 digits if provided)
+    if (formData.contactNumber && !/^\d{10}$/.test(formData.contactNumber)) {
+      setFormStatus({ type: 'error', msg: 'Contact number must be exactly 10 digits.' });
+      return;
+    }
+
+    setFormLoading(true);
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
@@ -254,6 +246,17 @@ export default function Portfolio() {
   const filteredCertificates = certFilter === 'All' 
     ? certificates 
     : certificates.filter(c => (c.category || 'Other') === certFilter);
+
+  if (pageLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner-container">
+          <div className="loading-logo">LOADING PORTFOLIO</div>
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -371,17 +374,17 @@ export default function Portfolio() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
               <div className="social-links">
                 {profile.github && (
-                  <a href={profile.github} target="_blank" rel="noreferrer" className="social-icon">
+                  <a href={ensureAbsoluteUrl(profile.github)} target="_blank" rel="noreferrer" className="social-icon">
                     <Github size={20} />
                   </a>
                 )}
                 {profile.linkedin && (
-                  <a href={profile.linkedin} target="_blank" rel="noreferrer" className="social-icon">
+                  <a href={ensureAbsoluteUrl(profile.linkedin)} target="_blank" rel="noreferrer" className="social-icon">
                     <Linkedin size={20} />
                   </a>
                 )}
                 {profile.instagram && (
-                  <a href={profile.instagram} target="_blank" rel="noreferrer" className="social-icon">
+                  <a href={ensureAbsoluteUrl(profile.instagram)} target="_blank" rel="noreferrer" className="social-icon">
                     <Instagram size={20} />
                   </a>
                 )}
@@ -541,7 +544,7 @@ export default function Portfolio() {
               <div key={cert._id} className="project-card glass-card" onClick={() => setSelectedCertificate(cert)} style={{ cursor: 'pointer' }}>
                 <div className="project-card-image" style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(30, 41, 59, 0.4)' }}>
                   {cert.image ? (
-                    <img src={cert.image} alt={cert.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={cert.image} alt={cert.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '10px' }} />
                   ) : (
                     <div style={{ fontSize: '3rem' }}>🏆</div>
                   )}

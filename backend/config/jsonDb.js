@@ -1,8 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import os from 'os';
 
-const DATA_DIR = path.resolve('data');
+const DATA_DIR = process.env.VERCEL 
+  ? path.join(os.tmpdir(), 'data') 
+  : path.resolve('data');
+
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }

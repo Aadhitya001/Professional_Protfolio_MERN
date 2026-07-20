@@ -1,35 +1,8 @@
 import express from 'express';
 import Certificate from '../models/Certificate.js';
 import { protect } from '../middleware/authMiddleware.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
 const router = express.Router();
-
-// Ensure uploads directory exists
-const UPLOAD_DIR = path.resolve('uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-// Multer storage for certificate images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `certificate-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowed = ['.png', '.jpg', '.jpeg', '.gif'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) cb(null, true);
-  else cb(new Error('Only image files are allowed'), false);
-};
-
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // @desc    Get all certificates
 // @route   GET /api/certificates
@@ -46,11 +19,9 @@ router.get('/', async (req, res) => {
 // @desc    Create a certificate
 // @route   POST /api/certificates
 // @access  Private
-router.post('/', protect, upload.single('image'), async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
-    const certificateData = { ...req.body, image: imageUrl };
-    const certificate = new Certificate(certificateData);
+    const certificate = new Certificate(req.body);
     const createdCertificate = await certificate.save();
     res.status(201).json(createdCertificate);
   } catch (error) {

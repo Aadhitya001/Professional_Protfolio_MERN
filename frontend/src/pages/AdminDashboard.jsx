@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   });
 
   const [feedback, setFeedback] = useState(null);
+  const [dbMode, setDbMode] = useState('');
 
   // Authenticate Admin
   useEffect(() => {
@@ -75,6 +76,16 @@ export default function AdminDashboard() {
 
         const certRes = await fetch('/api/certificates');
         if (certRes.ok) setCertificates(await certRes.json());
+
+        try {
+          const healthRes = await fetch('/api/health');
+          if (healthRes.ok) {
+            const healthData = await healthRes.json();
+            setDbMode(healthData.databaseMode || '');
+          }
+        } catch (healthErr) {
+          console.error('Error fetching health status:', healthErr);
+        }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       }
@@ -569,6 +580,26 @@ export default function AdminDashboard() {
         {feedback && (
           <div className={`form-alert ${feedback.type === 'success' ? 'form-alert-success' : 'form-alert-error'}`} style={{ marginBottom: '25px' }}>
             {feedback.msg}
+          </div>
+        )}
+
+        {dbMode.includes('Fallback JSON') && (
+          <div className="form-alert form-alert-error" style={{ marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+            <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span> Ephemeral Database Fallback Active
+            </div>
+            <div style={{ fontSize: '0.9rem', lineHeight: '1.4', textAlign: 'left' }}>
+              Your application is currently running in local fallback database mode because it failed to connect to MongoDB. 
+              <br />
+              <strong>Warning:</strong> Because Vercel serverless containers are temporary and stateless, <strong>all changes and updates you make here will be lost</strong> when the serverless function restarts or scales down.
+            </div>
+            <div style={{ fontSize: '0.85rem', marginTop: '4px', opacity: 0.9, textAlign: 'left' }}>
+              To ensure all data is safely stored and updated:
+              <ul style={{ margin: '5px 0 0 20px', padding: 0 }}>
+                <li>Configure the <code>MONGO_URI</code> environment variable on your Vercel Dashboard.</li>
+                <li>Ensure you have whitelisted <code>0.0.0.0/0</code> (Allow Access from Anywhere) in your MongoDB Atlas Network Access settings.</li>
+              </ul>
+            </div>
           </div>
         )}
 
