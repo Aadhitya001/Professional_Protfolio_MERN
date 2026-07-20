@@ -38,7 +38,7 @@ export default function AdminDashboard() {
 
   const [editingExperience, setEditingExperience] = useState(null);
   const [experienceForm, setExperienceForm] = useState({
-    type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: ''
+    type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: '', isCurrent: false
   });
 
   const [feedback, setFeedback] = useState(null);
@@ -443,6 +443,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const payload = {
       ...experienceForm,
+      toDate: experienceForm.isCurrent ? 'Present' : experienceForm.toDate,
       description: typeof experienceForm.description === 'string' ? experienceForm.description.split('\n').filter(line => line.trim()) : experienceForm.description
     };
     
@@ -484,6 +485,7 @@ export default function AdminDashboard() {
       duration: exp.duration || '',
       fromDate: exp.fromDate || '',
       toDate: exp.toDate || '',
+      isCurrent: exp.toDate === 'Present',
       description: exp.description.join('\n')
     });
   };
@@ -506,7 +508,7 @@ export default function AdminDashboard() {
 
   const resetExperienceForm = () => {
     setEditingExperience(null);
-    setExperienceForm({ type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: '' });
+    setExperienceForm({ type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: '', isCurrent: false });
   };
 
   // --- Messages Handler ---
@@ -1001,12 +1003,16 @@ export default function AdminDashboard() {
                 <div className="form-row">
                   <div className="form-group">
                     <label>From Date</label>
-                    <input type="text" value={experienceForm.fromDate} onChange={e => setExperienceForm({ ...experienceForm, fromDate: e.target.value })} placeholder="e.g. Jan 2021" required />
+                    <input type="date" value={experienceForm.fromDate} onChange={e => setExperienceForm({ ...experienceForm, fromDate: e.target.value })} required />
                   </div>
                   <div className="form-group">
                     <label>To Date</label>
-                    <input type="text" value={experienceForm.toDate} onChange={e => setExperienceForm({ ...experienceForm, toDate: e.target.value })} placeholder="e.g. Present" required />
+                    <input type="date" value={experienceForm.toDate} onChange={e => setExperienceForm({ ...experienceForm, toDate: e.target.value })} required={!experienceForm.isCurrent} disabled={experienceForm.isCurrent} />
                   </div>
+                </div>
+                <div className="form-group" style={{ flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
+                  <input type="checkbox" id="chk-current" checked={experienceForm.isCurrent} onChange={e => setExperienceForm({ ...experienceForm, isCurrent: e.target.checked })} />
+                  <label htmlFor="chk-current">I currently work here</label>
                 </div>
                 <div className="form-group">
                   <label>Description Bullets (One per line)</label>
