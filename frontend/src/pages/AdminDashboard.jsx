@@ -114,17 +114,25 @@ export default function AdminDashboard() {
   };
 
   const handlePrincipleChange = (index, field, value) => {
-    const updatedPrinciples = [...(profile.corePrinciples || [
-      { title: '', description: '' },
-      { title: '', description: '' },
-      { title: '', description: '' }
-    ])];
+    const updatedPrinciples = [...(profile.corePrinciples || [])];
     
     if (!updatedPrinciples[index]) {
       updatedPrinciples[index] = { title: '', description: '' };
     }
     
     updatedPrinciples[index][field] = value;
+    setProfile({ ...profile, corePrinciples: updatedPrinciples });
+  };
+
+  const handleAddPrinciple = () => {
+    const updatedPrinciples = [...(profile.corePrinciples || [])];
+    updatedPrinciples.push({ title: '', description: '' });
+    setProfile({ ...profile, corePrinciples: updatedPrinciples });
+  };
+
+  const handleRemovePrinciple = (index) => {
+    const updatedPrinciples = [...(profile.corePrinciples || [])];
+    updatedPrinciples.splice(index, 1);
     setProfile({ ...profile, corePrinciples: updatedPrinciples });
   };
 
@@ -774,64 +782,41 @@ export default function AdminDashboard() {
               </div>
 
               <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-glass)', paddingTop: '20px' }}>
-                <h4 style={{ marginBottom: '15px', color: 'var(--accent-primary)' }}>Core Principles Settings</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h4 style={{ color: 'var(--accent-primary)', margin: 0 }}>Core Principles Settings</h4>
+                  <button type="button" className="btn btn-secondary" onClick={handleAddPrinciple} style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Plus size={14} /> Add Principle
+                  </button>
+                </div>
                 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Core Principle 1: Title</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleTitle(0)} 
-                      onChange={e => handlePrincipleChange(0, 'title', e.target.value)} 
-                    />
+                {(profile.corePrinciples || []).map((principle, index) => (
+                  <div key={index} style={{ marginBottom: '20px', padding: '15px', border: '1px dashed var(--border-glass)', borderRadius: '8px', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Principle {index + 1}</span>
+                      <button type="button" onClick={() => handleRemovePrinciple(index)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} title="Remove Principle">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Title</label>
+                        <input 
+                          type="text" 
+                          value={getPrincipleTitle(index)} 
+                          onChange={e => handlePrincipleChange(index, 'title', e.target.value)} 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Description</label>
+                        <input 
+                          type="text" 
+                          value={getPrincipleDesc(index)} 
+                          onChange={e => handlePrincipleChange(index, 'description', e.target.value)} 
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Core Principle 1: Description</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleDesc(0)} 
-                      onChange={e => handlePrincipleChange(0, 'description', e.target.value)} 
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ marginTop: '15px' }}>
-                  <div className="form-group">
-                    <label>Core Principle 2: Title</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleTitle(1)} 
-                      onChange={e => handlePrincipleChange(1, 'title', e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Core Principle 2: Description</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleDesc(1)} 
-                      onChange={e => handlePrincipleChange(1, 'description', e.target.value)} 
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ marginTop: '15px' }}>
-                  <div className="form-group">
-                    <label>Core Principle 3: Title</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleTitle(2)} 
-                      onChange={e => handlePrincipleChange(2, 'title', e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Core Principle 3: Description</label>
-                    <input 
-                      type="text" 
-                      value={getPrincipleDesc(2)} 
-                      onChange={e => handlePrincipleChange(2, 'description', e.target.value)} 
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Save Settings</button>
