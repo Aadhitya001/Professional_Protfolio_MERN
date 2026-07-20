@@ -22,7 +22,15 @@ const experienceSchema = new mongoose.Schema({
   },
   duration: {
     type: String,
-    required: true
+    required: false
+  },
+  fromDate: {
+    type: String,
+    default: ''
+  },
+  toDate: {
+    type: String,
+    default: ''
   },
   description: {
     type: [String],

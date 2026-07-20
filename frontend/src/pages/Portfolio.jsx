@@ -625,7 +625,7 @@ export default function Portfolio() {
                       <h3 className="timeline-title">{exp.title}</h3>
                       <p className="timeline-org">{exp.company} {exp.location && `• ${exp.location}`}</p>
                     </div>
-                    <span className="timeline-duration">{exp.duration}</span>
+                    <span className="timeline-duration">{exp.fromDate && exp.toDate ? `${exp.fromDate} - ${exp.toDate}` : exp.duration}</span>
                   </div>
                   <ul className="timeline-desc">
                     {exp.description.map((bullet, i) => (

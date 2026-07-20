@@ -38,7 +38,7 @@ export default function AdminDashboard() {
 
   const [editingExperience, setEditingExperience] = useState(null);
   const [experienceForm, setExperienceForm] = useState({
-    type: 'work', title: '', company: '', location: '', duration: '', description: ''
+    type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: ''
   });
 
   const [feedback, setFeedback] = useState(null);
@@ -481,7 +481,9 @@ export default function AdminDashboard() {
       title: exp.title,
       company: exp.company,
       location: exp.location || '',
-      duration: exp.duration,
+      duration: exp.duration || '',
+      fromDate: exp.fromDate || '',
+      toDate: exp.toDate || '',
       description: exp.description.join('\n')
     });
   };
@@ -504,7 +506,7 @@ export default function AdminDashboard() {
 
   const resetExperienceForm = () => {
     setEditingExperience(null);
-    setExperienceForm({ type: 'work', title: '', company: '', location: '', duration: '', description: '' });
+    setExperienceForm({ type: 'work', title: '', company: '', location: '', duration: '', fromDate: '', toDate: '', description: '' });
   };
 
   // --- Messages Handler ---
@@ -953,7 +955,7 @@ export default function AdminDashboard() {
                         <tr key={exp._id}>
                           <td>{exp.title}</td>
                           <td>{exp.company}</td>
-                          <td>{exp.duration}</td>
+                          <td>{exp.fromDate && exp.toDate ? `${exp.fromDate} - ${exp.toDate}` : exp.duration}</td>
                           <td className="admin-actions-cell">
                             <button className="admin-action-btn admin-action-btn-edit" onClick={() => startEditExperience(exp)} title="Edit">
                               <Edit2 size={16} />
@@ -996,9 +998,15 @@ export default function AdminDashboard() {
                   <label>Location</label>
                   <input type="text" value={experienceForm.location} onChange={e => setExperienceForm({ ...experienceForm, location: e.target.value })} />
                 </div>
-                <div className="form-group">
-                  <label>Duration (e.g. 2024 - Present)</label>
-                  <input type="text" value={experienceForm.duration} onChange={e => setExperienceForm({ ...experienceForm, duration: e.target.value })} required />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>From Date</label>
+                    <input type="text" value={experienceForm.fromDate} onChange={e => setExperienceForm({ ...experienceForm, fromDate: e.target.value })} placeholder="e.g. Jan 2021" required />
+                  </div>
+                  <div className="form-group">
+                    <label>To Date</label>
+                    <input type="text" value={experienceForm.toDate} onChange={e => setExperienceForm({ ...experienceForm, toDate: e.target.value })} placeholder="e.g. Present" required />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Description Bullets (One per line)</label>
