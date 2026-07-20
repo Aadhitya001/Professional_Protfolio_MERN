@@ -100,6 +100,33 @@ export default function AdminDashboard() {
     setTimeout(() => setFeedback(null), 4000);
   };
 
+  // --- Core Principles Helpers ---
+  const getPrincipleTitle = (index) => {
+    return profile.corePrinciples && profile.corePrinciples[index]
+      ? profile.corePrinciples[index].title
+      : '';
+  };
+
+  const getPrincipleDesc = (index) => {
+    return profile.corePrinciples && profile.corePrinciples[index]
+      ? profile.corePrinciples[index].description
+      : '';
+  };
+
+  const handlePrincipleChange = (index, field, value) => {
+    const updatedPrinciples = [...(profile.corePrinciples || [
+      { title: '', description: '' },
+      { title: '', description: '' }
+    ])];
+    
+    if (!updatedPrinciples[index]) {
+      updatedPrinciples[index] = { title: '', description: '' };
+    }
+    
+    updatedPrinciples[index][field] = value;
+    setProfile({ ...profile, corePrinciples: updatedPrinciples });
+  };
+
   // --- Profile Handler ---
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -745,7 +772,49 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Save Settings</button>
+              <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-glass)', paddingTop: '20px' }}>
+                <h4 style={{ marginBottom: '15px', color: 'var(--accent-primary)' }}>Core Principles Settings</h4>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Core Principle 1: Title</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleTitle(0)} 
+                      onChange={e => handlePrincipleChange(0, 'title', e.target.value)} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Core Principle 1: Description</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleDesc(0)} 
+                      onChange={e => handlePrincipleChange(0, 'description', e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ marginTop: '15px' }}>
+                  <div className="form-group">
+                    <label>Core Principle 2: Title</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleTitle(1)} 
+                      onChange={e => handlePrincipleChange(1, 'title', e.target.value)} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Core Principle 2: Description</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleDesc(1)} 
+                      onChange={e => handlePrincipleChange(1, 'description', e.target.value)} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Save Settings</button>
             </form>
           </div>
         )}

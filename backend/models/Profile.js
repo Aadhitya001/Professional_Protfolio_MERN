@@ -47,6 +47,16 @@ const profileSchema = new mongoose.Schema({
   location: {
     type: String,
     default: ''
+  },
+  corePrinciples: {
+    type: [{
+      title: String,
+      description: String
+    }],
+    default: [
+      { title: 'Premium Aesthetics', description: 'Focus on clean alignment, rich micro-animations, and striking visual contrasts.' },
+      { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' }
+    ]
   }
 }, {
   timestamps: true

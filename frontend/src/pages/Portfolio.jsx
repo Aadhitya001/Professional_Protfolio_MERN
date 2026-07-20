@@ -400,14 +400,19 @@ export default function Portfolio() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h3>My Core Principles</h3>
             <div style={{ display: 'grid', gap: '15px' }}>
-              <div className="glass-card" style={{ padding: '15px', borderRadius: '12px' }}>
-                <h4 style={{ color: 'var(--accent-primary)', marginBottom: '5px' }}>Premium Aesthetics</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Focus on clean alignment, rich micro-animations, and striking visual contrasts.</p>
-              </div>
-              <div className="glass-card" style={{ padding: '15px', borderRadius: '12px' }}>
-                <h4 style={{ color: 'var(--accent-secondary)', marginBottom: '5px' }}>Clean Architecture</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Writing modular components and highly structured backend APIs.</p>
-              </div>
+              {(profile.corePrinciples && profile.corePrinciples.length > 0 ? profile.corePrinciples : [
+                { title: 'Premium Aesthetics', description: 'Focus on clean alignment, rich micro-animations, and striking visual contrasts.' },
+                { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' }
+              ]).map((principle, index) => (
+                <div key={index} className="glass-card" style={{ padding: '15px', borderRadius: '12px' }}>
+                  <h4 style={{ color: index === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)', marginBottom: '5px' }}>
+                    {principle.title}
+                  </h4>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    {principle.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
