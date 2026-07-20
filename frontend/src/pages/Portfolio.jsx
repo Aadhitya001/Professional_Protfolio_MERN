@@ -247,6 +247,13 @@ export default function Portfolio() {
     ? certificates 
     : certificates.filter(c => (c.category || 'Other') === certFilter);
 
+  const formatYear = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr === 'Present') return 'Present';
+    const date = new Date(dateStr);
+    return isNaN(date.getFullYear()) ? dateStr : date.getFullYear();
+  };
+
   if (pageLoading) {
     return (
       <div className="loading-screen">
@@ -625,7 +632,7 @@ export default function Portfolio() {
                       <h3 className="timeline-title">{exp.title}</h3>
                       <p className="timeline-org">{exp.company} {exp.location && `• ${exp.location}`}</p>
                     </div>
-                    <span className="timeline-duration">{exp.fromDate && exp.toDate ? `${exp.fromDate} - ${exp.toDate}` : exp.duration}</span>
+                    <span className="timeline-duration">{exp.fromDate && exp.toDate ? `${formatYear(exp.fromDate)} - ${formatYear(exp.toDate)}` : exp.duration}</span>
                   </div>
                   <ul className="timeline-desc">
                     {exp.description.map((bullet, i) => (
