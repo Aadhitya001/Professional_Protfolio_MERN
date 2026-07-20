@@ -5,3 +5,4 @@ backend/uploads/
 .env*
 scratch/
 test-email.js
+data/
