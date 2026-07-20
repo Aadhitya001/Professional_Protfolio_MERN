@@ -116,6 +116,7 @@ export default function AdminDashboard() {
   const handlePrincipleChange = (index, field, value) => {
     const updatedPrinciples = [...(profile.corePrinciples || [
       { title: '', description: '' },
+      { title: '', description: '' },
       { title: '', description: '' }
     ])];
     
@@ -809,6 +810,25 @@ export default function AdminDashboard() {
                       type="text" 
                       value={getPrincipleDesc(1)} 
                       onChange={e => handlePrincipleChange(1, 'description', e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ marginTop: '15px' }}>
+                  <div className="form-group">
+                    <label>Core Principle 3: Title</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleTitle(2)} 
+                      onChange={e => handlePrincipleChange(2, 'title', e.target.value)} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Core Principle 3: Description</label>
+                    <input 
+                      type="text" 
+                      value={getPrincipleDesc(2)} 
+                      onChange={e => handlePrincipleChange(2, 'description', e.target.value)} 
                     />
                   </div>
                 </div>

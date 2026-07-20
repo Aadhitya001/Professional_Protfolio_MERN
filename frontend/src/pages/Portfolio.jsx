@@ -402,10 +402,11 @@ export default function Portfolio() {
             <div style={{ display: 'grid', gap: '15px' }}>
               {(profile.corePrinciples && profile.corePrinciples.length > 0 ? profile.corePrinciples : [
                 { title: 'Premium Aesthetics', description: 'Focus on clean alignment, rich micro-animations, and striking visual contrasts.' },
-                { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' }
+                { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' },
+                { title: 'Continuous Growth', description: 'Always learning and embracing the latest technologies and best practices.' }
               ]).map((principle, index) => (
                 <div key={index} className="glass-card" style={{ padding: '15px', borderRadius: '12px' }}>
-                  <h4 style={{ color: index === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)', marginBottom: '5px' }}>
+                  <h4 style={{ color: index === 0 ? 'var(--accent-primary)' : index === 1 ? 'var(--accent-secondary)' : 'var(--text-primary)', marginBottom: '5px' }}>
                     {principle.title}
                   </h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

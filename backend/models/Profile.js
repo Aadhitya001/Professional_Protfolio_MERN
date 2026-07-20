@@ -55,7 +55,8 @@ const profileSchema = new mongoose.Schema({
     }],
     default: [
       { title: 'Premium Aesthetics', description: 'Focus on clean alignment, rich micro-animations, and striking visual contrasts.' },
-      { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' }
+      { title: 'Clean Architecture', description: 'Writing modular components and highly structured backend APIs.' },
+      { title: 'Continuous Growth', description: 'Always learning and embracing the latest technologies and best practices.' }
     ]
   }
 }, {
