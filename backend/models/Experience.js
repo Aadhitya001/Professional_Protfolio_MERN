@@ -5,7 +5,7 @@ const experienceSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['work', 'education'],
+    enum: ['work', 'education', 'internship'],
     default: 'work'
   },
   title: {

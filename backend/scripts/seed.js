@@ -91,6 +91,17 @@ const seedData = async () => {
           ]
         },
         {
+          type: 'internship',
+          title: 'Software Engineering Intern',
+          company: 'TechCorp Innovations',
+          location: 'Boston, MA',
+          duration: 'Summer 2021',
+          description: [
+            'Assisted in building microservices with Node.js and MongoDB.',
+            'Implemented automated CI/CD unit testing pipelines.'
+          ]
+        },
+        {
           type: 'education',
           title: 'B.S. in Computer Science',
           company: 'State University',
@@ -104,7 +115,7 @@ const seedData = async () => {
         }
       ];
       await Experience.insertMany(experiences);
-      console.log(`Work and education experiences seeded in ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
+      console.log(`Work, internship, and education experiences seeded in ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
 
       const projects = [
         {

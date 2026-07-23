@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { 
   User, Briefcase, Code, Mail, LayoutDashboard, Plus, 
-  Trash2, LogOut, Check, ArrowLeft, Edit2, Award
+  Trash2, LogOut, Check, ArrowLeft, Edit2, Award, Lock, Link as LinkIcon, ShieldCheck, Users, Eye
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -25,6 +25,15 @@ export default function AdminDashboard() {
   const [certificates, setCertificates] = useState([]);
   const [editingCertificate, setEditingCertificate] = useState(null);
   const [certificateForm, setCertificateForm] = useState({ name: '', issuer: '', date: '', image: '', verificationUrl: '', category: 'Cloud' });
+
+  // Private Vault state
+  const [privateDocs, setPrivateDocs] = useState([]);
+  const [accessTokens, setAccessTokens] = useState([]);
+  const [vaultDocForm, setVaultDocForm] = useState({ title: '', category: 'Other', file: null });
+  const [vaultAccessForm, setVaultAccessForm] = useState({ label: '', expiresAt: '', documentIds: [], allowDownload: true });
+  const [copiedToken, setCopiedToken] = useState(null);
+  const [selectedViewersToken, setSelectedViewersToken] = useState(null);
+  const [showAllViewersModal, setShowAllViewersModal] = useState(false);
 
   // Edit/Form states
   const [editingProject, setEditingProject] = useState(null); // null means adding or not editing
@@ -76,6 +85,13 @@ export default function AdminDashboard() {
 
         const certRes = await fetch('/api/certificates');
         if (certRes.ok) setCertificates(await certRes.json());
+
+        // Fetch private vault data
+        const pvDocRes = await fetch('/api/private-docs', { headers });
+        if (pvDocRes.ok) setPrivateDocs(await pvDocRes.json());
+
+        const pvAccessRes = await fetch('/api/private-docs/access', { headers });
+        if (pvAccessRes.ok) setAccessTokens(await pvAccessRes.json());
 
         try {
           const healthRes = await fetch('/api/health');
@@ -547,6 +563,92 @@ export default function AdminDashboard() {
   // Helper stats
   const unreadMessagesCount = messages.filter(m => !m.read).length;
 
+  // ── Private Vault Handlers ──────────────────────────
+  const handleVaultDocUpload = async (e) => {
+    e.preventDefault();
+    if (!vaultDocForm.file || !vaultDocForm.title) return triggerFeedback('Title and file are required', 'error');
+    const formData = new FormData();
+    formData.append('file', vaultDocForm.file);
+    formData.append('title', vaultDocForm.title);
+    formData.append('category', vaultDocForm.category);
+    try {
+      const res = await fetch('/api/private-docs', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${user.token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setPrivateDocs([saved, ...privateDocs]);
+        setVaultDocForm({ title: '', category: 'Other', file: null });
+        triggerFeedback('Document uploaded to vault successfully!');
+      } else {
+        const d = await res.json();
+        triggerFeedback(d.message || 'Upload failed', 'error');
+      }
+    } catch { triggerFeedback('Upload error', 'error'); }
+  };
+
+  const handleDeleteVaultDoc = async (id) => {
+    if (!window.confirm('Delete this document from the vault?')) return;
+    try {
+      const res = await fetch(`/api/private-docs/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        setPrivateDocs(privateDocs.filter(d => d._id !== id));
+        triggerFeedback('Document deleted.');
+      }
+    } catch { triggerFeedback('Delete error', 'error'); }
+  };
+
+  const handleCreateAccessToken = async (e) => {
+    e.preventDefault();
+    if (!vaultAccessForm.label || !vaultAccessForm.expiresAt) return triggerFeedback('Label and expiry required', 'error');
+    if (!vaultAccessForm.documentIds || vaultAccessForm.documentIds.length === 0) {
+      return triggerFeedback('Please select at least one document to share', 'error');
+    }
+    try {
+      const res = await fetch('/api/private-docs/access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+        body: JSON.stringify(vaultAccessForm)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAccessTokens([saved, ...accessTokens]);
+        setVaultAccessForm({ label: '', expiresAt: '', documentIds: [], allowDownload: true });
+        triggerFeedback('Access link created successfully!');
+      } else {
+        const d = await res.json();
+        triggerFeedback(d.message || 'Failed', 'error');
+      }
+    } catch { triggerFeedback('Error creating access link', 'error'); }
+  };
+
+  const handleRevokeToken = async (id) => {
+    if (!window.confirm('Revoke this access link?')) return;
+    try {
+      const res = await fetch(`/api/private-docs/access/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        setAccessTokens(accessTokens.filter(t => t._id !== id));
+        triggerFeedback('Access link revoked.');
+      }
+    } catch { triggerFeedback('Revoke error', 'error'); }
+  };
+
+  const copyAccessLink = (token) => {
+    const url = `${window.location.origin}/docs/${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2500);
+    triggerFeedback('Access link copied to clipboard!');
+  };
+
   if (loading || !user) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>Loading authentication...</div>;
   }
@@ -601,6 +703,13 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('messages')}
           >
             <Mail size={18} /> Inbox ({unreadMessagesCount})
+          </li>
+          <li
+            className={`admin-menu-item ${activeTab === 'vault' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vault')}
+            style={{ color: activeTab === 'vault' ? '#a78bfa' : undefined }}
+          >
+            <Lock size={18} /> Private Vault
           </li>
         </ul>
 
@@ -946,6 +1055,7 @@ export default function AdminDashboard() {
                   <table className="admin-table">
                     <thead>
                       <tr>
+                        <th>Category</th>
                         <th>Title</th>
                         <th>Organization</th>
                         <th>Duration</th>
@@ -955,6 +1065,19 @@ export default function AdminDashboard() {
                     <tbody>
                       {experiences.map(exp => (
                         <tr key={exp._id}>
+                          <td>
+                            <span style={{ 
+                              textTransform: 'capitalize',
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              background: exp.type === 'work' ? 'rgba(59, 130, 246, 0.15)' : exp.type === 'internship' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                              color: exp.type === 'work' ? '#3b82f6' : exp.type === 'internship' ? '#a855f7' : '#10b981'
+                            }}>
+                              {exp.type || 'work'}
+                            </span>
+                          </td>
                           <td>{exp.title}</td>
                           <td>{exp.company}</td>
                           <td>{exp.fromDate && exp.toDate ? `${exp.fromDate} - ${exp.toDate}` : exp.duration}</td>
@@ -985,6 +1108,7 @@ export default function AdminDashboard() {
                     style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', padding: '10px', color: 'var(--text-primary)', borderRadius: '4px' }}
                   >
                     <option value="work">Work History</option>
+                    <option value="internship">Internship</option>
                     <option value="education">Education</option>
                   </select>
                 </div>
@@ -1002,12 +1126,12 @@ export default function AdminDashboard() {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>From Date</label>
-                    <input type="date" value={experienceForm.fromDate} onChange={e => setExperienceForm({ ...experienceForm, fromDate: e.target.value })} required />
+                    <label>From Date (e.g. Oct 2023)</label>
+                    <input type="text" value={experienceForm.fromDate} onChange={e => setExperienceForm({ ...experienceForm, fromDate: e.target.value })} placeholder="e.g. Oct 2023" required />
                   </div>
                   <div className="form-group">
-                    <label>To Date</label>
-                    <input type="date" value={experienceForm.toDate} onChange={e => setExperienceForm({ ...experienceForm, toDate: e.target.value })} required={!experienceForm.isCurrent} disabled={experienceForm.isCurrent} />
+                    <label>To Date (e.g. Dec 2025)</label>
+                    <input type="text" value={experienceForm.toDate} onChange={e => setExperienceForm({ ...experienceForm, toDate: e.target.value })} placeholder="e.g. Dec 2025" required={!experienceForm.isCurrent} disabled={experienceForm.isCurrent} />
                   </div>
                 </div>
                 <div className="form-group" style={{ flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
@@ -1242,6 +1366,495 @@ export default function AdminDashboard() {
                 </div>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* TAB: PRIVATE VAULT */}
+        {activeTab === 'vault' && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
+              <Lock size={22} color="#a78bfa" />
+              <div>
+                <h2 style={{ margin: 0, color: '#e2e8f0' }}>Private Document Vault</h2>
+                <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>Upload sensitive documents and share access links securely.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px', alignItems: 'start' }}>
+              {/* Upload Form */}
+              <div className="glass-card">
+                <h3 style={{ marginBottom: '20px', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Plus size={18} color="#6366f1" /> Upload Document
+                </h3>
+                <form onSubmit={handleVaultDocUpload} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div className="form-group">
+                    <label>Document Title</label>
+                    <input type="text" value={vaultDocForm.title} onChange={e => setVaultDocForm({ ...vaultDocForm, title: e.target.value })} placeholder="e.g. Aadhaar Card" required />
+                  </div>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select value={vaultDocForm.category} onChange={e => setVaultDocForm({ ...vaultDocForm, category: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none', cursor: 'pointer' }}>
+                      {['Aadhaar', 'PAN', 'Bank Passbook', 'Driving License', 'Passport', 'Marksheet', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>File (PDF or Image)</label>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        readOnly 
+                        value={vaultDocForm.file ? vaultDocForm.file.name : ''} 
+                        placeholder="No file chosen" 
+                        style={{ flexGrow: 1, background: 'rgba(15, 23, 42, 0.4)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', outline: 'none' }} 
+                        required
+                      />
+                      <label className="btn btn-secondary" style={{ padding: '12px 20px', fontSize: '0.9rem', margin: 0, whiteSpace: 'nowrap', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        Browse...
+                        <input 
+                          type="file" 
+                          accept="image/*,.pdf" 
+                          onChange={e => setVaultDocForm({ ...vaultDocForm, file: e.target.files[0] })} 
+                          style={{ display: 'none' }} 
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Upload to Vault</button>
+                </form>
+              </div>
+
+              {/* Create Access Link */}
+              <div className="glass-card">
+                <h3 style={{ marginBottom: '20px', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <LinkIcon size={18} color="#6366f1" /> Create Access Link
+                </h3>
+                <form onSubmit={handleCreateAccessToken} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div className="form-group">
+                    <label>Label (Who is it for?)</label>
+                    <input type="text" value={vaultAccessForm.label} onChange={e => setVaultAccessForm({ ...vaultAccessForm, label: e.target.value })} placeholder="e.g. HR - TCS, Bank Manager" required />
+                  </div>
+                  <div className="form-group">
+                    <label>Expiry Date & Time</label>
+                    <input type="datetime-local" value={vaultAccessForm.expiresAt} onChange={e => setVaultAccessForm({ ...vaultAccessForm, expiresAt: e.target.value })} required style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', padding: '12px', borderRadius: 'var(--radius-sm)', width: '100%', outline: 'none' }} />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ marginBottom: '8px', display: 'block' }}>Select Documents to Share</label>
+                    {privateDocs.length === 0 ? (
+                      <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>⚠️ No documents uploaded yet. Upload one first.</p>
+                    ) : (
+                      <div>
+                        <select
+                          value=""
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val && !vaultAccessForm.documentIds?.includes(val)) {
+                              setVaultAccessForm({
+                                ...vaultAccessForm,
+                                documentIds: [...(vaultAccessForm.documentIds || []), val]
+                              });
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-glass)',
+                            borderRadius: 'var(--radius-sm)',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">-- Choose documents to share --</option>
+                          {privateDocs.map(doc => (
+                            <option 
+                              key={doc._id} 
+                              value={doc._id} 
+                              disabled={vaultAccessForm.documentIds?.includes(doc._id)}
+                            >
+                              {doc.title} ({doc.category})
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Selected Documents Tags */}
+                        {vaultAccessForm.documentIds && vaultAccessForm.documentIds.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                            {vaultAccessForm.documentIds.map(id => {
+                              const doc = privateDocs.find(d => d._id === id);
+                              if (!doc) return null;
+                              return (
+                                <span 
+                                  key={id} 
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: 'rgba(99, 102, 241, 0.2)',
+                                    color: '#a5b4fc',
+                                    padding: '4px 10px',
+                                    borderRadius: '16px',
+                                    fontSize: '0.8rem',
+                                    border: '1px solid rgba(99, 102, 241, 0.35)',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                >
+                                  {doc.title} ({doc.category})
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      setVaultAccessForm({
+                                        ...vaultAccessForm,
+                                        documentIds: vaultAccessForm.documentIds.filter(dId => dId !== id)
+                                      });
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#ef4444',
+                                      cursor: 'pointer',
+                                      fontSize: '0.9rem',
+                                      padding: '0 2px',
+                                      marginLeft: '4px',
+                                      fontWeight: 'bold',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                    title="Remove document"
+                                  >
+                                    ✕
+                                  </button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="allowDownload" 
+                      checked={vaultAccessForm.allowDownload} 
+                      onChange={e => setVaultAccessForm({ ...vaultAccessForm, allowDownload: e.target.checked })} 
+                      style={{ cursor: 'pointer', width: '16px', height: '16px', padding: 0, margin: 0, minWidth: '16px' }}
+                    />
+                    <label htmlFor="allowDownload" style={{ margin: 0, cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                      Grant Download Access (Allow viewers to download)
+                    </label>
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={privateDocs.length === 0}>Generate Access Link</button>
+                </form>
+              </div>
+            </div>
+
+            {/* Documents List */}
+            <div className="glass-card" style={{ marginBottom: '24px' }}>
+              <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>📁 Vault Documents ({privateDocs.length})</h3>
+              {privateDocs.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)' }}>No documents uploaded yet.</p>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead><tr><th>Title</th><th>Category</th><th>File</th><th>Uploaded</th><th>Action</th></tr></thead>
+                    <tbody>
+                      {privateDocs.map(doc => (
+                        <tr key={doc._id}>
+                          <td>{doc.title}</td>
+                          <td><span style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>{doc.category}</span></td>
+                          <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{doc.fileName}</td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(doc.createdAt).toLocaleDateString()}</td>
+                          <td><button className="admin-action-btn admin-action-btn-delete" onClick={() => handleDeleteVaultDoc(doc._id)} title="Delete"><Trash2 size={14} /></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Access Tokens List */}
+            <div className="glass-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                <h3 style={{ margin: 0, color: '#e2e8f0' }}>🔑 Access Links ({accessTokens.length})</h3>
+                {accessTokens.length > 0 && (
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => setShowAllViewersModal(true)}
+                    style={{ padding: '6px 14px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Users size={16} /> View All Viewers Log
+                  </button>
+                )}
+              </div>
+              {accessTokens.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)' }}>No access links created yet.</p>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead><tr><th>Label</th><th>Shared Docs</th><th>Expires</th><th>Viewers Log</th><th style={{ textAlign: 'center' }}>Views</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {accessTokens.map(t => {
+                        const expired = new Date() > new Date(t.expiresAt);
+                        const sharedDocs = privateDocs.filter(d => t.documentIds?.includes(d._id));
+                        const viewerCount = t.viewers && t.viewers.length > 0 ? t.viewers.length : (t.viewerName ? 1 : 0);
+                        return (
+                          <tr key={t._id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{t.label}</div>
+                              <div style={{ fontSize: '0.72rem', color: t.allowDownload ? '#10b981' : '#f59e0b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {t.allowDownload ? '🔓 Downloadable' : '🔒 View-Only'}
+                              </div>
+                            </td>
+                            <td>
+                              {t.documentIds && t.documentIds.length > 0 ? (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {sharedDocs.length > 0 ? (
+                                    sharedDocs.map(d => (
+                                      <span key={d._id} style={{ background: 'rgba(167,139,250,0.15)', color: '#c084fc', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }} title={d.title}>
+                                        {d.title}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Docs deleted</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>All Documents</span>
+                              )}
+                            </td>
+                            <td style={{ fontSize: '0.82rem', color: expired ? '#ef4444' : 'var(--text-secondary)' }}>{new Date(t.expiresAt).toLocaleString()}</td>
+                            <td>
+                              {viewerCount > 0 ? (
+                                <button
+                                  onClick={() => setSelectedViewersToken(t)}
+                                  style={{
+                                    background: 'rgba(99,102,241,0.15)',
+                                    border: '1px solid rgba(99,102,241,0.3)',
+                                    color: '#a5b4fc',
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    fontWeight: 600
+                                  }}
+                                  title="Click to view all viewers"
+                                >
+                                  <Users size={13} /> {viewerCount} Viewer{viewerCount > 1 ? 's' : ''}
+                                </button>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No viewers yet</span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>{t.viewCount || 0}</td>
+                            <td>
+                              {expired ? (
+                                <span style={{ color: '#ef4444', fontSize: '0.78rem', fontWeight: 600 }}>EXPIRED</span>
+                              ) : (
+                                <span style={{ color: '#22c55e', fontSize: '0.78rem', fontWeight: 600 }}>ACTIVE</span>
+                              )}
+                            </td>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              <div className="admin-actions-cell" style={{ alignItems: 'center' }}>
+                                <button
+                                  className="admin-action-btn"
+                                  onClick={() => setSelectedViewersToken(t)}
+                                  title="View all viewers"
+                                  style={{
+                                    color: '#a78bfa',
+                                    background: 'none',
+                                    transition: 'var(--transition)',
+                                    borderRadius: '4px',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(167, 139, 250, 0.15)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'none';
+                                  }}
+                                >
+                                  <Users size={16} />
+                                </button>
+                                <button
+                                  className="admin-action-btn admin-action-btn-edit"
+                                  onClick={() => copyAccessLink(t.accessToken)}
+                                  title="Copy link"
+                                  style={{
+                                    background: copiedToken === t.accessToken ? 'rgba(34, 197, 94, 0.15)' : 'none',
+                                    color: copiedToken === t.accessToken ? '#22c55e' : undefined,
+                                    transition: 'var(--transition)',
+                                  }}
+                                >
+                                  {copiedToken === t.accessToken ? <Check size={16} /> : <LinkIcon size={16} />}
+                                </button>
+                                <button className="admin-action-btn admin-action-btn-delete" onClick={() => handleRevokeToken(t._id)} title="Revoke">
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Viewers List Modal (Per Link) */}
+            {selectedViewersToken && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+                zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+              }}>
+                <div style={{
+                  background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '16px', width: '100%', maxWidth: '650px', maxHeight: '85vh',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                }}>
+                  <div style={{
+                    padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)'
+                  }}>
+                    <div>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Users size={20} color="#6366f1" /> Viewers Log — {selectedViewersToken.label}
+                      </h3>
+                      <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '0.8rem' }}>
+                        Total Views: <strong>{selectedViewersToken.viewCount || 0}</strong> • Created: {new Date(selectedViewersToken.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button onClick={() => setSelectedViewersToken(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+                  </div>
+
+                  <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                    {((selectedViewersToken.viewers && selectedViewersToken.viewers.length > 0) || selectedViewersToken.viewerName) ? (
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Viewer Name</th>
+                            <th>Email Address</th>
+                            <th>Viewed At</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedViewersToken.viewers && selectedViewersToken.viewers.length > 0 ? (
+                            selectedViewersToken.viewers.map((v, idx) => (
+                              <tr key={idx}>
+                                <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                <td style={{ fontWeight: 600, color: '#f1f5f9' }}>{v.name || 'Anonymous'}</td>
+                                <td style={{ color: '#a5b4fc' }}>{v.email || 'N/A'}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{v.viewedAt ? new Date(v.viewedAt).toLocaleString() : 'N/A'}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td>1</td>
+                              <td style={{ fontWeight: 600, color: '#f1f5f9' }}>{selectedViewersToken.viewerName}</td>
+                              <td style={{ color: '#a5b4fc' }}>{selectedViewersToken.viewerEmail}</td>
+                              <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{selectedViewersToken.viewedAt ? new Date(selectedViewersToken.viewedAt).toLocaleString() : 'N/A'}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p style={{ textAlign: 'center', color: '#94a3b8', padding: '30px 0' }}>No viewers have accessed this link yet.</p>
+                    )}
+                  </div>
+
+                  <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'right', background: 'rgba(0,0,0,0.2)' }}>
+                    <button className="btn btn-secondary" onClick={() => setSelectedViewersToken(null)}>Close</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Master All Viewers Log Modal */}
+            {showAllViewersModal && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+                zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+              }}>
+                <div style={{
+                  background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '16px', width: '100%', maxWidth: '750px', maxHeight: '85vh',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                }}>
+                  <div style={{
+                    padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)'
+                  }}>
+                    <div>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Users size={20} color="#6366f1" /> All Document Viewers Master Log
+                      </h3>
+                      <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '0.8rem' }}>
+                        Consolidated history of all individuals who accessed shared private documents
+                      </p>
+                    </div>
+                    <button onClick={() => setShowAllViewersModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+                  </div>
+
+                  <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                    {(() => {
+                      const allViewersList = [];
+                      accessTokens.forEach(t => {
+                        if (t.viewers && t.viewers.length > 0) {
+                          t.viewers.forEach(v => {
+                            allViewersList.push({ ...v, tokenLabel: t.label });
+                          });
+                        } else if (t.viewerName) {
+                          allViewersList.push({ name: t.viewerName, email: t.viewerEmail, viewedAt: t.viewedAt, tokenLabel: t.label });
+                        }
+                      });
+
+                      if (allViewersList.length === 0) {
+                        return <p style={{ textAlign: 'center', color: '#94a3b8', padding: '30px 0' }}>No viewers recorded across any links yet.</p>;
+                      }
+
+                      allViewersList.sort((a, b) => new Date(b.viewedAt || 0) - new Date(a.viewedAt || 0));
+
+                      return (
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Access Link Label</th>
+                              <th>Viewer Name</th>
+                              <th>Email</th>
+                              <th>Viewed At</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allViewersList.map((v, idx) => (
+                              <tr key={idx}>
+                                <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                <td><span style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem' }}>{v.tokenLabel}</span></td>
+                                <td style={{ fontWeight: 600, color: '#f1f5f9' }}>{v.name || 'Anonymous'}</td>
+                                <td style={{ color: '#a5b4fc' }}>{v.email || 'N/A'}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{v.viewedAt ? new Date(v.viewedAt).toLocaleString() : 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+                  </div>
+
+                  <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'right', background: 'rgba(0,0,0,0.2)' }}>
+                    <button className="btn btn-secondary" onClick={() => setShowAllViewersModal(false)}>Close</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

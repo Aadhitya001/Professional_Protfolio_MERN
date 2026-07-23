@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-console.log('Auth login request received', req.body);
+  console.log('Auth login request received', req.body);
   try {
     const user = await User.findOne({ username });
     if (user && (await user.matchPassword(password))) {
@@ -43,4 +44,49 @@ console.log('Auth login request received', req.body);
   }
 });
 
+// @desc    Reset admin password
+// @route   POST /api/auth/reset-password
+// @access  Private (Admin)
+router.post('/reset-password', protect, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current password and new password are required' });
+  }
+  try {
+    let user = await User.findOne({ username: req.user.username });
+    
+    if (!user) {
+      // If user does not exist in db, but matches env credentials (for pseudo admin)
+      if (req.user._id === 'admin' && currentPassword === (process.env.ADMIN_PASSWORD || 'Admin786')) {
+        user = new User({
+          username: req.user.username,
+          password: newPassword
+        });
+        await user.save();
+        return res.json({ message: 'Password updated successfully' });
+      } else {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      // Fallback check against environment password if user logged in via env bypass
+      if (req.user._id === 'admin' && currentPassword === (process.env.ADMIN_PASSWORD || 'Admin786')) {
+        // proceed
+      } else {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
+

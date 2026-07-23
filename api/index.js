@@ -12,6 +12,7 @@ import skillRoutes from '../backend/routes/skillRoutes.js';
 import messageRoutes from '../backend/routes/messageRoutes.js';
 import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import certificateRoutes from '../backend/routes/certificateRoutes.js';
+import privateDocRoutes from '../backend/routes/privateDocRoutes.js';
 
 import mongoose from 'mongoose';
 import Profile from '../backend/models/Profile.js';
@@ -48,6 +49,7 @@ app.use('/api/skills', skillRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/private-docs', privateDocRoutes);
 
 app.get('/api/portfolio-data', async (req, res) => {
   try {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { 
   Sun, Moon, Menu, X, Github, Linkedin, Instagram, Mail, 
-  MapPin, Briefcase, GraduationCap, ArrowRight, 
+  MapPin, Briefcase, GraduationCap, Award, ArrowRight, 
   Code, Server, Wrench, Send, ExternalLink, Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -247,11 +247,13 @@ export default function Portfolio() {
     ? certificates 
     : certificates.filter(c => (c.category || 'Other') === certFilter);
 
-  const formatYear = (dateStr) => {
+  const formatDate = (dateStr) => {
     if (!dateStr) return '';
     if (dateStr === 'Present') return 'Present';
     const date = new Date(dateStr);
-    return isNaN(date.getFullYear()) ? dateStr : date.getFullYear();
+    if (isNaN(date.getTime())) return dateStr;
+    if (/^\d{4}$/.test(dateStr.trim())) return dateStr;
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
   if (pageLoading) {
@@ -624,15 +626,34 @@ export default function Portfolio() {
             experiences.map((exp) => (
               <div key={exp._id} className="timeline-item">
                 <div className="timeline-badge">
-                  {exp.type === 'work' ? <Briefcase size={16} /> : <GraduationCap size={16} />}
+                  {exp.type === 'work' ? <Briefcase size={16} /> : exp.type === 'internship' ? <Award size={16} /> : <GraduationCap size={16} />}
                 </div>
                 <div className="timeline-card glass-card">
                   <div className="timeline-header">
                     <div>
-                      <h3 className="timeline-title">{exp.title}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <h3 className="timeline-title">{exp.title}</h3>
+                        {exp.type && (
+                          <span style={{
+                            fontSize: '0.7rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontWeight: '600',
+                            textTransform: 'capitalize',
+                            background: exp.type === 'work' ? 'rgba(59, 130, 246, 0.15)' : exp.type === 'internship' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                            color: exp.type === 'work' ? '#3b82f6' : exp.type === 'internship' ? '#a855f7' : '#10b981'
+                          }}>
+                            {exp.type}
+                          </span>
+                        )}
+                      </div>
                       <p className="timeline-org">{exp.company} {exp.location && `• ${exp.location}`}</p>
                     </div>
-                    <span className="timeline-duration">{exp.fromDate && exp.toDate ? `${formatYear(exp.fromDate)} - ${formatYear(exp.toDate)}` : exp.duration}</span>
+                    <span className="timeline-duration">
+                      {exp.fromDate 
+                        ? `${formatDate(exp.fromDate)} - ${exp.toDate ? formatDate(exp.toDate) : 'Present'}` 
+                        : exp.duration}
+                    </span>
                   </div>
                   <ul className="timeline-desc">
                     {exp.description.map((bullet, i) => (

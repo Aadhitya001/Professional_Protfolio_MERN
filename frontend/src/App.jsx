@@ -4,6 +4,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import Portfolio from './pages/Portfolio';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import DocumentViewer from './pages/DocumentViewer';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="/" element={<Portfolio />} />
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+          <Route path="/docs/:token" element={<DocumentViewer />} />
         </Routes>
       </Router>
     </AuthProvider>
