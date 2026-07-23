@@ -88,5 +88,43 @@ router.post('/reset-password', protect, async (req, res) => {
   }
 });
 
+// @desc    Update admin username
+// @route   PUT /api/auth/update-username
+// @access  Private (Admin)
+router.put('/update-username', protect, async (req, res) => {
+  const { newUsername } = req.body;
+  if (!newUsername || !newUsername.trim()) {
+    return res.status(400).json({ message: 'New username is required' });
+  }
+  try {
+    let user = await User.findOne({ username: req.user.username });
+    if (!user) {
+      user = new User({
+        username: newUsername,
+        password: process.env.ADMIN_PASSWORD || 'Admin786',
+        isAdmin: true
+      });
+    } else {
+      user.username = newUsername;
+    }
+
+    await user.save();
+    
+    // Generate new token
+    const token = generateToken(user._id);
+
+    res.json({
+      message: 'Username updated successfully',
+      user: {
+        _id: user._id,
+        username: user.username,
+        token
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
 

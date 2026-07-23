@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (data) => {
-    const userData = { ...data, isAdmin: data._id === 'admin' };
+    const userData = { ...data, isAdmin: true };
     setUser(userData);
     sessionStorage.setItem('portfolio_user', JSON.stringify(userData));
   };

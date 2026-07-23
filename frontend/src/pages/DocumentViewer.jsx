@@ -182,9 +182,6 @@ export default function DocumentViewer() {
         const data = await res.json();
         setVaultData(data);
         setStage('docs');
-        if (data.documents && data.documents.length > 0) {
-          setSelectedDoc(data.documents[0]);
-        }
       } else {
         const data = await res.json();
         setErrorMsg(data.message);

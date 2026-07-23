@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { user, logout, loading } = useContext(AuthContext);
+  const { user, login, logout, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -27,6 +27,39 @@ export default function AdminDashboard() {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     localStorage.setItem('theme', nextTheme);
+  };
+
+  const [newUsername, setNewUsername] = useState(user?.username || '');
+
+  useEffect(() => {
+    if (user?.username) {
+      setNewUsername(user.username);
+    }
+  }, [user]);
+
+  const handleCredentialsUpdate = async (e) => {
+    e.preventDefault();
+    if (!newUsername.trim()) return triggerFeedback('Username cannot be empty', 'error');
+    try {
+      const res = await fetch('/api/auth/update-username', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ newUsername: newUsername.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update user state inside AuthContext
+        login(data.user);
+        triggerFeedback('Admin name updated successfully!');
+      } else {
+        triggerFeedback(data.message || 'Failed to update admin name', 'error');
+      }
+    } catch {
+      triggerFeedback('Error updating admin name', 'error');
+    }
   };
 
   // Backend data state
@@ -861,7 +894,8 @@ export default function AdminDashboard() {
 
         {/* TAB 2: PROFILE SETTINGS */}
         {activeTab === 'profile' && (
-          <div className="glass-card">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div className="glass-card">
             <h3 style={{ marginBottom: '20px' }}>Update Profile Information</h3>
             <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="form-row">
@@ -975,7 +1009,28 @@ export default function AdminDashboard() {
               <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Save Settings</button>
             </form>
           </div>
-        )}
+
+          {/* Account Credentials Card */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lock size={18} color="var(--accent-primary)" /> Admin Account Settings
+            </h3>
+            <form onSubmit={handleCredentialsUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="form-group">
+                <label>Admin Name (Username)</label>
+                <input 
+                  type="text" 
+                  value={newUsername} 
+                  onChange={e => setNewUsername(e.target.value)} 
+                  placeholder="New admin username" 
+                  required 
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Update Admin Name</button>
+            </form>
+          </div>
+        </div>
+      )}
 
         {/* TAB 3: PROJECTS */}
         {activeTab === 'projects' && (
