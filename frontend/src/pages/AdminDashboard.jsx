@@ -3,13 +3,31 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { 
   User, Briefcase, Code, Mail, LayoutDashboard, Plus, 
-  Trash2, LogOut, Check, ArrowLeft, Edit2, Award, Lock, Link as LinkIcon, ShieldCheck, Users, Eye
+  Trash2, LogOut, Check, ArrowLeft, Edit2, Award, Lock, Link as LinkIcon, ShieldCheck, Users, Eye, Sun, Moon
 } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, logout, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Theme support
+  const getInitialTheme = () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  };
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
 
   // Backend data state
   const [messages, setMessages] = useState([]);
@@ -723,7 +741,29 @@ export default function AdminDashboard() {
       <main className="admin-content">
         <header className="admin-header">
           <h2>Dashboard / {activeTab.toUpperCase()}</h2>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Welcome, {user.username}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button 
+              className="theme-toggle" 
+              onClick={toggleTheme}
+              title="Toggle Theme"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-glass)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                transition: 'var(--transition)'
+              }}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Welcome, {user.username}</span>
+          </div>
         </header>
 
         {feedback && (
