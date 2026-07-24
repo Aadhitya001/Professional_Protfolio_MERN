@@ -1168,7 +1168,11 @@ export default function AdminDashboard() {
                               fontSize: '0.75rem',
                               fontWeight: '600',
                               background: exp.type === 'work' ? 'rgba(59, 130, 246, 0.15)' : exp.type === 'internship' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                              color: exp.type === 'work' ? '#3b82f6' : exp.type === 'internship' ? '#a855f7' : '#10b981'
+                              color: exp.type === 'work' 
+                                ? (theme === 'light' ? '#1d4ed8' : '#3b82f6') 
+                                : exp.type === 'internship' 
+                                  ? (theme === 'light' ? '#7c3aed' : '#a855f7') 
+                                  : (theme === 'light' ? '#047857' : '#10b981')
                             }}>
                               {exp.type || 'work'}
                             </span>
@@ -1468,9 +1472,9 @@ export default function AdminDashboard() {
         {activeTab === 'vault' && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-              <Lock size={22} color="#a78bfa" />
+              <Lock size={22} color={theme === 'light' ? 'var(--accent-primary)' : '#a78bfa'} />
               <div>
-                <h2 style={{ margin: 0, color: '#e2e8f0' }}>Private Document Vault</h2>
+                <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Private Document Vault</h2>
                 <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>Upload sensitive documents and share access links securely.</p>
               </div>
             </div>
@@ -1478,8 +1482,8 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px', alignItems: 'start' }}>
               {/* Upload Form */}
               <div className="glass-card">
-                <h3 style={{ marginBottom: '20px', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Plus size={18} color="#6366f1" /> Upload Document
+                <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Plus size={18} color="var(--accent-primary)" /> Upload Document
                 </h3>
                 <form onSubmit={handleVaultDocUpload} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="form-group">
@@ -1520,8 +1524,8 @@ export default function AdminDashboard() {
 
               {/* Create Access Link */}
               <div className="glass-card">
-                <h3 style={{ marginBottom: '20px', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <LinkIcon size={18} color="#6366f1" /> Create Access Link
+                <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <LinkIcon size={18} color="var(--accent-primary)" /> Create Access Link
                 </h3>
                 <form onSubmit={handleCreateAccessToken} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="form-group">
@@ -1533,7 +1537,55 @@ export default function AdminDashboard() {
                     <input type="datetime-local" value={vaultAccessForm.expiresAt} onChange={e => setVaultAccessForm({ ...vaultAccessForm, expiresAt: e.target.value })} required style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', padding: '12px', borderRadius: 'var(--radius-sm)', width: '100%', outline: 'none' }} />
                   </div>
                   <div className="form-group">
-                    <label style={{ marginBottom: '8px', display: 'block' }}>Select Documents to Share</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ margin: 0 }}>Select Documents to Share</label>
+                      {privateDocs.length > 0 && (
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVaultAccessForm({
+                                ...vaultAccessForm,
+                                documentIds: privateDocs.map(d => d._id)
+                              });
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#6366f1',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem',
+                              fontWeight: '500',
+                              padding: 0
+                            }}
+                          >
+                            Select All
+                          </button>
+                          {vaultAccessForm.documentIds && vaultAccessForm.documentIds.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVaultAccessForm({
+                                  ...vaultAccessForm,
+                                  documentIds: []
+                                });
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                fontSize: '0.8rem',
+                                fontWeight: '500',
+                                padding: 0
+                              }}
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     {privateDocs.length === 0 ? (
                       <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: 0 }}>⚠️ No documents uploaded yet. Upload one first.</p>
                     ) : (
@@ -1542,7 +1594,12 @@ export default function AdminDashboard() {
                           value=""
                           onChange={e => {
                             const val = e.target.value;
-                            if (val && !vaultAccessForm.documentIds?.includes(val)) {
+                            if (val === 'all') {
+                              setVaultAccessForm({
+                                ...vaultAccessForm,
+                                documentIds: privateDocs.map(d => d._id)
+                              });
+                            } else if (val && !vaultAccessForm.documentIds?.includes(val)) {
                               setVaultAccessForm({
                                 ...vaultAccessForm,
                                 documentIds: [...(vaultAccessForm.documentIds || []), val]
@@ -1561,6 +1618,9 @@ export default function AdminDashboard() {
                           }}
                         >
                           <option value="">-- Choose documents to share --</option>
+                          {vaultAccessForm.documentIds?.length < privateDocs.length && (
+                            <option value="all">★ Select All Documents ({privateDocs.length})</option>
+                          )}
                           {privateDocs.map(doc => (
                             <option 
                               key={doc._id} 
@@ -1647,7 +1707,7 @@ export default function AdminDashboard() {
 
             {/* Documents List */}
             <div className="glass-card" style={{ marginBottom: '24px' }}>
-              <h3 style={{ marginBottom: '20px', color: '#e2e8f0' }}>📁 Vault Documents ({privateDocs.length})</h3>
+              <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)' }}>📁 Vault Documents ({privateDocs.length})</h3>
               {privateDocs.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)' }}>No documents uploaded yet.</p>
               ) : (
@@ -1658,7 +1718,7 @@ export default function AdminDashboard() {
                       {privateDocs.map(doc => (
                         <tr key={doc._id}>
                           <td>{doc.title}</td>
-                          <td><span style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>{doc.category}</span></td>
+                          <td><span style={{ background: 'rgba(99,102,241,0.15)', color: theme === 'light' ? '#4f46e5' : '#a5b4fc', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>{doc.category}</span></td>
                           <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{doc.fileName}</td>
                           <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(doc.createdAt).toLocaleDateString()}</td>
                           <td><button className="admin-action-btn admin-action-btn-delete" onClick={() => handleDeleteVaultDoc(doc._id)} title="Delete"><Trash2 size={14} /></button></td>
@@ -1673,7 +1733,7 @@ export default function AdminDashboard() {
             {/* Access Tokens List */}
             <div className="glass-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-                <h3 style={{ margin: 0, color: '#e2e8f0' }}>🔑 Access Links ({accessTokens.length})</h3>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>🔑 Access Links ({accessTokens.length})</h3>
                 {accessTokens.length > 0 && (
                   <button 
                     className="btn btn-secondary"
@@ -1708,7 +1768,7 @@ export default function AdminDashboard() {
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                   {sharedDocs.length > 0 ? (
                                     sharedDocs.map(d => (
-                                      <span key={d._id} style={{ background: 'rgba(167,139,250,0.15)', color: '#c084fc', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }} title={d.title}>
+                                      <span key={d._id} style={{ background: 'rgba(167,139,250,0.15)', color: theme === 'light' ? '#7c3aed' : '#c084fc', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }} title={d.title}>
                                         {d.title}
                                       </span>
                                     ))
@@ -1728,7 +1788,7 @@ export default function AdminDashboard() {
                                   style={{
                                     background: 'rgba(99,102,241,0.15)',
                                     border: '1px solid rgba(99,102,241,0.3)',
-                                    color: '#a5b4fc',
+                                    color: theme === 'light' ? '#4f46e5' : '#a5b4fc',
                                     padding: '4px 10px',
                                     borderRadius: '6px',
                                     fontSize: '0.78rem',

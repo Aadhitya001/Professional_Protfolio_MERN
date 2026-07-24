@@ -1,1 +1,61 @@
-[]
+[
+  {
+    "description": [
+      "Lead frontend development of a high-traffic SaaS dashboard, increasing page load speed by 40%.",
+      "Architected reusable component libraries using React and custom CSS variables, saving developers 15+ hours weekly.",
+      "Mentored 4 junior engineers and introduced automated testing processes."
+    ],
+    "type": "work",
+    "title": "Senior Software Engineer",
+    "company": "Vortex Labs",
+    "location": "San Francisco, CA",
+    "duration": "2024 - Present",
+    "_id": "wpfx4pf",
+    "createdAt": "2026-07-24T01:59:18.826Z",
+    "updatedAt": "2026-07-24T01:59:18.826Z"
+  },
+  {
+    "description": [
+      "Built and maintained Express.js REST APIs serving over 50,000 active users.",
+      "Integrated secure payment handling gateways and dynamic user authentication.",
+      "Optimized database queries in MongoDB, reducing server response times by 25%."
+    ],
+    "type": "work",
+    "title": "Full Stack Developer",
+    "company": "Nexa Solutions",
+    "location": "Remote",
+    "duration": "2022 - 2024",
+    "_id": "m5ovt75",
+    "createdAt": "2026-07-24T01:59:18.827Z",
+    "updatedAt": "2026-07-24T01:59:18.827Z"
+  },
+  {
+    "description": [
+      "Assisted in building microservices with Node.js and MongoDB.",
+      "Implemented automated CI/CD unit testing pipelines."
+    ],
+    "type": "internship",
+    "title": "Software Engineering Intern",
+    "company": "TechCorp Innovations",
+    "location": "Boston, MA",
+    "duration": "Summer 2021",
+    "_id": "cvt702n",
+    "createdAt": "2026-07-24T01:59:18.828Z",
+    "updatedAt": "2026-07-24T01:59:18.828Z"
+  },
+  {
+    "description": [
+      "Specialized in Software Engineering and Database Architectures.",
+      "Graduated with Honors, GPA: 3.8/4.0.",
+      "Developed a web-based campus event manager as a senior capstone project."
+    ],
+    "type": "education",
+    "title": "B.S. in Computer Science",
+    "company": "State University",
+    "location": "Boston, MA",
+    "duration": "2018 - 2022",
+    "_id": "d2zfrsz",
+    "createdAt": "2026-07-24T01:59:18.828Z",
+    "updatedAt": "2026-07-24T01:59:18.828Z"
+  }
+]

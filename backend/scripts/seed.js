@@ -8,6 +8,8 @@ import Experience from '../models/Experience.js';
 import Project from '../models/Project.js';
 import Message from '../models/Message.js';
 import Certificate from '../models/Certificate.js';
+import PrivateDocument from '../models/PrivateDocument.js';
+import DocumentAccess from '../models/DocumentAccess.js';
 import connectDB from '../config/db.js';
 
 dotenv.config();
@@ -24,6 +26,8 @@ const seedData = async () => {
       await Project.deleteMany();
       await Message.deleteMany();
       await Certificate.deleteMany();
+      await PrivateDocument.deleteMany();
+      await DocumentAccess.deleteMany();
 
       console.log(`Database cleared for ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
 
@@ -183,6 +187,32 @@ const seedData = async () => {
       ];
       await Certificate.insertMany(certificates);
       console.log(`Certificates seeded in ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
+
+      const privateDocs = [
+        {
+          title: 'Aadhaar Card',
+          category: 'Aadhaar',
+          fileName: 'aadhaar.png',
+          fileType: 'image/png',
+          fileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+        },
+        {
+          title: 'PAN Card',
+          category: 'PAN',
+          fileName: 'pan.png',
+          fileType: 'image/png',
+          fileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+        },
+        {
+          title: 'Passport Copy',
+          category: 'Passport',
+          fileName: 'passport.pdf',
+          fileType: 'application/pdf',
+          fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iagogIDw8IC9UeXBlIC9DYXRhbG9nCiAgICAgL1BhZ2VzIDIgMCBSCiAgPj4KZW5kb2JqCg=='
+        }
+      ];
+      await PrivateDocument.insertMany(privateDocs);
+      console.log(`Private documents seeded in ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
     };
 
     console.log('Seeding primary database...');

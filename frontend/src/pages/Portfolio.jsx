@@ -641,7 +641,11 @@ export default function Portfolio() {
                             fontWeight: '600',
                             textTransform: 'capitalize',
                             background: exp.type === 'work' ? 'rgba(59, 130, 246, 0.15)' : exp.type === 'internship' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                            color: exp.type === 'work' ? '#3b82f6' : exp.type === 'internship' ? '#a855f7' : '#10b981'
+                            color: exp.type === 'work' 
+                              ? (theme === 'light' ? '#1d4ed8' : '#3b82f6') 
+                              : exp.type === 'internship' 
+                                ? (theme === 'light' ? '#7c3aed' : '#a855f7') 
+                                : (theme === 'light' ? '#047857' : '#10b981')
                           }}>
                             {exp.type}
                           </span>

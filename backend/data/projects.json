@@ -1,1 +1,61 @@
-[]
+[
+  {
+    "title": "Quantum Task Manager",
+    "description": "A beautiful collaborative task management app with real-time updates and interactive Kanban boards.",
+    "longDescription": "Quantum is a full-featured project collaboration tool. It features secure JWT user authentication, real-time board updates using WebSockets, drag-and-drop workflow task lists, and detailed activity logs. The dashboard is designed with a premium glassmorphic dark theme.",
+    "tags": [
+      "React",
+      "Node.js",
+      "Express",
+      "MongoDB",
+      "Socket.io"
+    ],
+    "category": "Full Stack",
+    "link": "https://example.com/quantum",
+    "github": "https://github.com/example/quantum",
+    "image": "https://images.unsplash.com/photo-1540350390157-86b3509e47cd?w=600&auto=format&fit=crop&q=60",
+    "featured": true,
+    "_id": "p20iuai",
+    "createdAt": "2026-07-24T01:59:18.829Z",
+    "updatedAt": "2026-07-24T01:59:18.829Z"
+  },
+  {
+    "title": "Aura Music Web Player",
+    "description": "An elegant custom music player interface showcasing dynamic visual animations and audio controls.",
+    "longDescription": "Aura is a responsive frontend client displaying high-fidelity audio controls, playlist managers, and local audio streaming. It uses Web Audio APIs for animated background waveform visualizers matching the beat frequency.",
+    "tags": [
+      "React",
+      "HTML5 Audio",
+      "CSS Modules",
+      "Web Audio API"
+    ],
+    "category": "Frontend",
+    "link": "https://example.com/aura",
+    "github": "https://github.com/example/aura",
+    "image": "https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=600&auto=format&fit=crop&q=60",
+    "featured": true,
+    "_id": "0czlrso",
+    "createdAt": "2026-07-24T01:59:18.830Z",
+    "updatedAt": "2026-07-24T01:59:18.830Z"
+  },
+  {
+    "title": "API Sentinel Analytics",
+    "description": "A lightweight server monitoring dashboard tracks endpoint uptime, latency, and system load.",
+    "longDescription": "Sentinel Analytics runs background checks on configured HTTP/HTTPS URLs, recording historical response times, error frequencies, and server health. It provides rich REST endpoints and sends real-time system alerts.",
+    "tags": [
+      "Node.js",
+      "Express",
+      "Redis",
+      "Chart.js",
+      "Cron"
+    ],
+    "category": "Backend",
+    "link": "https://example.com/sentinel",
+    "github": "https://github.com/example/sentinel",
+    "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=60",
+    "featured": false,
+    "_id": "uimedbd",
+    "createdAt": "2026-07-24T01:59:18.831Z",
+    "updatedAt": "2026-07-24T01:59:18.831Z"
+  }
+]
