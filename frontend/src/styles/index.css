@@ -666,7 +666,8 @@ h1, h2, h3, h4, h5, h6 {
   content: '';
   position: absolute;
   width: 2px;
-  background: var(--border-glass);
+  background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary));
+  opacity: 0.4;
   top: 0;
   bottom: 0;
   left: 32px;
