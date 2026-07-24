@@ -12,6 +12,9 @@ const categoryIcons = {
   'Other': '📄'
 };
 
+let jspdfLoadingPromise = null;
+let pdfjsLoadingPromise = null;
+
 export default function DocumentViewer() {
   const { token } = useParams();
   const [stage, setStage] = useState('verify'); // 'verify' | 'form' | 'docs' | 'error'
@@ -21,35 +24,94 @@ export default function DocumentViewer() {
   const [viewerEmail, setViewerEmail] = useState('');
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState([]);
-  // Helper to download a single document
-  const downloadDoc = (doc) => {
-    const a = document.createElement('a');
-    a.href = doc.fileUrl;
-    a.download = doc.fileName;
-    a.click();
-  };
-  // Download all selected documents
-  const downloadSelected = () => {
-    selectedDocs.forEach(downloadDoc);
-  };
   const [loading, setLoading] = useState(false);
   const [isBlurred, setIsBlurred] = useState(false);
   const [pdfPages, setPdfPages] = useState([]);
   const [renderingPdf, setRenderingPdf] = useState(false);
+  const [previewJpg, setPreviewJpg] = useState(null);
+  const [convertingImage, setConvertingImage] = useState(false);
 
-  // PDF.js loader helper
+  // jsPDF loader helper with single-load locking
+  const loadJsPdf = () => {
+    if (window.jspdf) return Promise.resolve(window.jspdf);
+    if (jspdfLoadingPromise) return jspdfLoadingPromise;
+    
+    jspdfLoadingPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        resolve(window.jspdf);
+      };
+      script.onerror = (err) => {
+        jspdfLoadingPromise = null; // Reset on failure
+        reject(err);
+      };
+      document.head.appendChild(script);
+    });
+    return jspdfLoadingPromise;
+  };
+
+  // Helper to download a single document as PDF (if image, converts to PDF)
+  const downloadDoc = async (doc) => {
+    if (doc.fileType.startsWith('image/')) {
+      try {
+        const { jsPDF } = await loadJsPdf();
+        const img = new Image();
+        img.onload = () => {
+          const pdf = new jsPDF({
+            orientation: img.width > img.height ? 'l' : 'p',
+            unit: 'px',
+            format: [img.width, img.height]
+          });
+          pdf.addImage(img, 'JPEG', 0, 0, img.width, img.height);
+          
+          let name = doc.fileName || 'document';
+          const dotIndex = name.lastIndexOf('.');
+          if (dotIndex !== -1) {
+            name = name.substring(0, dotIndex);
+          }
+          pdf.save(`${name}.pdf`);
+        };
+        img.src = doc.fileUrl;
+      } catch (err) {
+        console.error('Error exporting image to PDF:', err);
+        const a = document.createElement('a');
+        a.href = doc.fileUrl;
+        a.download = doc.fileName;
+        a.click();
+      }
+    } else {
+      const a = document.createElement('a');
+      a.href = doc.fileUrl;
+      a.download = doc.fileName;
+      a.click();
+    }
+  };
+
+  // Download all selected documents
+  const downloadSelected = () => {
+    selectedDocs.forEach(downloadDoc);
+  };
+
+  // PDF.js loader helper with single-load locking
   const loadPdfJs = () => {
-    return new Promise((resolve, reject) => {
-      if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfjsLoadingPromise) return pdfjsLoadingPromise;
+
+    pdfjsLoadingPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
       script.onload = () => {
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         resolve(window.pdfjsLib);
       };
-      script.onerror = reject;
+      script.onerror = (err) => {
+        pdfjsLoadingPromise = null; // Reset on failure
+        reject(err);
+      };
       document.head.appendChild(script);
     });
+    return pdfjsLoadingPromise;
   };
 
   // Convert base64 PDF into an array of JPEG page data URLs
@@ -82,16 +144,40 @@ export default function DocumentViewer() {
     return pages;
   };
 
+  // Convert base64 Image to JPEG data URL
+  const convertImageToJpeg = (base64Img) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => {
+        resolve(base64Img);
+      };
+      img.src = base64Img;
+    });
+  };
+
   useEffect(() => {
     if (!selectedDoc) {
       setPdfPages([]);
+      setPreviewJpg(null);
       setRenderingPdf(false);
+      setConvertingImage(false);
       return;
     }
 
     if (selectedDoc.fileType === 'application/pdf') {
       setRenderingPdf(true);
       setPdfPages([]);
+      setPreviewJpg(null);
       convertPdfToJpegs(selectedDoc.fileUrl)
         .then(pages => {
           setPdfPages(pages);
@@ -101,9 +187,23 @@ export default function DocumentViewer() {
           console.error('Error rendering PDF:', err);
           setRenderingPdf(false);
         });
+    } else if (selectedDoc.fileType.startsWith('image/')) {
+      setConvertingImage(true);
+      setPdfPages([]);
+      convertImageToJpeg(selectedDoc.fileUrl)
+        .then(jpgUrl => {
+          setPreviewJpg(jpgUrl);
+          setConvertingImage(false);
+        })
+        .catch(err => {
+          console.error('Error converting image:', err);
+          setConvertingImage(false);
+        });
     } else {
       setPdfPages([]);
+      setPreviewJpg(null);
       setRenderingPdf(false);
+      setConvertingImage(false);
     }
   }, [selectedDoc]);
 
@@ -383,41 +483,53 @@ export default function DocumentViewer() {
                 <div style={styles.previewBody}>
                   {selectedDoc.fileType.startsWith('image/') ? (
                     <div style={{ position: 'relative', display: 'inline-block', overflow: 'hidden' }}>
-                      <img 
-                        src={selectedDoc.fileUrl} 
-                        alt={selectedDoc.title} 
-                        style={{ 
-                          maxWidth: '100%', 
-                          maxHeight: '75vh', 
-                          borderRadius: '8px', 
-                          objectFit: 'contain',
-                          pointerEvents: !vaultData.allowDownload ? 'none' : 'auto',
-                          userSelect: 'none',
-                          WebkitUserDrag: 'none'
-                        }} 
-                      />
-                      {!vaultData.allowDownload && (
-                        <>
-                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, background: 'transparent' }} />
+                      {convertingImage ? (
+                        <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
                           <div style={{
-                            position: 'absolute',
-                            top: 0, left: 0, right: 0, bottom: 0,
-                            zIndex: 11,
-                            pointerEvents: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: 0.12,
-                            transform: 'rotate(-30deg)',
-                            fontSize: '2.5rem',
-                            fontWeight: 900,
-                            color: '#fff',
-                            textTransform: 'uppercase',
-                            letterSpacing: '4px',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            CONFIDENTIAL • VIEW ONLY
-                          </div>
+                            ...styles.loadingSpinner,
+                            width: '40px', height: '40px', border: '3px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 1s linear infinite'
+                          }} />
+                          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Preparing preview...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <img 
+                            src={previewJpg || selectedDoc.fileUrl} 
+                            alt={selectedDoc.title} 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '75vh', 
+                              borderRadius: '8px', 
+                              objectFit: 'contain',
+                              pointerEvents: !vaultData.allowDownload ? 'none' : 'auto',
+                              userSelect: 'none',
+                              WebkitUserDrag: 'none'
+                            }} 
+                          />
+                          {!vaultData.allowDownload && (
+                            <>
+                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, background: 'transparent' }} />
+                              <div style={{
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                zIndex: 11,
+                                pointerEvents: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: 0.12,
+                                transform: 'rotate(-30deg)',
+                                fontSize: '2.5rem',
+                                fontWeight: 900,
+                                color: '#fff',
+                                textTransform: 'uppercase',
+                                letterSpacing: '4px',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                CONFIDENTIAL • VIEW ONLY
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
