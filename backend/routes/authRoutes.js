@@ -16,7 +16,6 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  console.log('Auth login request received', req.body);
   try {
     const user = await User.findOne({ username });
     if (user && (await user.matchPassword(password))) {
