@@ -1126,8 +1126,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .admin-actions-cell {
-  display: flex;
-  gap: 10px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.admin-actions-cell > * {
+  display: inline-flex !important;
+  vertical-align: middle;
+}
+
+.admin-actions-cell > * + * {
+  margin-left: 10px;
 }
 
 .admin-action-btn {
