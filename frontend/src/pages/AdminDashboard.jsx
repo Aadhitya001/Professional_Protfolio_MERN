@@ -32,6 +32,11 @@ export default function AdminDashboard() {
   const [newUsername, setNewUsername] = useState(user?.username || '');
   const [newEmail, setNewEmail] = useState(user?.email || '');
 
+  // Password reset states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   useEffect(() => {
     if (user?.username) {
       setNewUsername(user.username);
@@ -40,6 +45,37 @@ export default function AdminDashboard() {
       setNewEmail(user.email);
     }
   }, [user]);
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return triggerFeedback('All password fields are required', 'error');
+    }
+    if (newPassword !== confirmPassword) {
+      return triggerFeedback('New passwords do not match', 'error');
+    }
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        triggerFeedback('Password changed successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        triggerFeedback(data.message || 'Failed to reset password', 'error');
+      }
+    } catch {
+      triggerFeedback('Error resetting password', 'error');
+    }
+  };
 
   const handleCredentialsUpdate = async (e) => {
     e.preventDefault();
@@ -1092,6 +1128,46 @@ export default function AdminDashboard() {
                 />
               </div>
               <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Update Account Settings</button>
+            </form>
+          </div>
+
+          {/* Change Password Card */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lock size={18} color="var(--accent-primary)" /> Change Admin Password
+            </h3>
+            <form onSubmit={handlePasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="form-group">
+                <label>Current Password</label>
+                <input 
+                  type="password" 
+                  value={currentPassword} 
+                  onChange={e => setCurrentPassword(e.target.value)} 
+                  placeholder="Enter current password" 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>New Password</label>
+                <input 
+                  type="password" 
+                  value={newPassword} 
+                  onChange={e => setNewPassword(e.target.value)} 
+                  placeholder="Enter new password" 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input 
+                  type="password" 
+                  value={confirmPassword} 
+                  onChange={e => setConfirmPassword(e.target.value)} 
+                  placeholder="Confirm new password" 
+                  required 
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Change Password</button>
             </form>
           </div>
         </div>
