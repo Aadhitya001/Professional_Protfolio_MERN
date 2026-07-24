@@ -650,8 +650,14 @@ export default function AdminDashboard() {
       if (res.ok) {
         setPrivateDocs(privateDocs.filter(d => d._id !== id));
         triggerFeedback('Document deleted.');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        triggerFeedback(errorData.message || 'Failed to delete document.', 'error');
       }
-    } catch { triggerFeedback('Delete error', 'error'); }
+    } catch (err) {
+      console.error('Delete document error:', err);
+      triggerFeedback('Delete error', 'error');
+    }
   };
 
   const handleCreateAccessToken = async (e) => {
@@ -688,8 +694,14 @@ export default function AdminDashboard() {
       if (res.ok) {
         setAccessTokens(accessTokens.filter(t => t._id !== id));
         triggerFeedback('Access link revoked.');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        triggerFeedback(errorData.message || 'Failed to revoke access link.', 'error');
       }
-    } catch { triggerFeedback('Revoke error', 'error'); }
+    } catch (err) {
+      console.error('Revoke token error:', err);
+      triggerFeedback('Revoke error', 'error');
+    }
   };
 
   const copyAccessLink = (token) => {
