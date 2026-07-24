@@ -85,6 +85,7 @@ export default function AdminDashboard() {
   const [copiedToken, setCopiedToken] = useState(null);
   const [selectedViewersToken, setSelectedViewersToken] = useState(null);
   const [showAllViewersModal, setShowAllViewersModal] = useState(false);
+  const [editingVaultDoc, setEditingVaultDoc] = useState(null);
 
   // Edit/Form states
   const [editingProject, setEditingProject] = useState(null); // null means adding or not editing
@@ -615,29 +616,64 @@ export default function AdminDashboard() {
   const unreadMessagesCount = messages.filter(m => !m.read).length;
 
   // ── Private Vault Handlers ──────────────────────────
-  const handleVaultDocUpload = async (e) => {
+  const handleVaultDocSubmit = async (e) => {
     e.preventDefault();
-    if (!vaultDocForm.file || !vaultDocForm.title) return triggerFeedback('Title and file are required', 'error');
+    if (!editingVaultDoc && !vaultDocForm.file) {
+      return triggerFeedback('File is required', 'error');
+    }
+    if (!vaultDocForm.title) {
+      return triggerFeedback('Title is required', 'error');
+    }
+
     const formData = new FormData();
-    formData.append('file', vaultDocForm.file);
+    if (vaultDocForm.file) {
+      formData.append('file', vaultDocForm.file);
+    }
     formData.append('title', vaultDocForm.title);
     formData.append('category', vaultDocForm.category);
+
     try {
-      const res = await fetch('/api/private-docs', {
-        method: 'POST',
+      const url = editingVaultDoc 
+        ? `/api/private-docs/${editingVaultDoc._id}`
+        : '/api/private-docs';
+      const method = editingVaultDoc ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Authorization': `Bearer ${user.token}` },
         body: formData
       });
       if (res.ok) {
         const saved = await res.json();
-        setPrivateDocs([saved, ...privateDocs]);
-        setVaultDocForm({ title: '', category: 'Other', file: null });
-        triggerFeedback('Document uploaded to vault successfully!');
+        if (editingVaultDoc) {
+          setPrivateDocs(privateDocs.map(d => d._id === editingVaultDoc._id ? saved : d));
+          triggerFeedback('Document updated successfully!');
+        } else {
+          setPrivateDocs([saved, ...privateDocs]);
+          triggerFeedback('Document uploaded to vault successfully!');
+        }
+        resetVaultDocForm();
       } else {
         const d = await res.json();
-        triggerFeedback(d.message || 'Upload failed', 'error');
+        triggerFeedback(d.message || (editingVaultDoc ? 'Update failed' : 'Upload failed'), 'error');
       }
-    } catch { triggerFeedback('Upload error', 'error'); }
+    } catch { 
+      triggerFeedback(editingVaultDoc ? 'Update error' : 'Upload error', 'error'); 
+    }
+  };
+
+  const startEditVaultDoc = (doc) => {
+    setEditingVaultDoc(doc);
+    setVaultDocForm({
+      title: doc.title || '',
+      category: doc.category || 'Other',
+      file: null
+    });
+  };
+
+  const resetVaultDocForm = () => {
+    setEditingVaultDoc(null);
+    setVaultDocForm({ title: '', category: 'Other', file: null });
   };
 
   const handleDeleteVaultDoc = async (id) => {
@@ -1492,12 +1528,13 @@ export default function AdminDashboard() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px', alignItems: 'start' }}>
-              {/* Upload Form */}
+              {/* Upload / Edit Form */}
               <div className="glass-card">
                 <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Plus size={18} color="var(--accent-primary)" /> Upload Document
+                  {editingVaultDoc ? <Edit2 size={18} color="var(--accent-primary)" /> : <Plus size={18} color="var(--accent-primary)" />}
+                  {editingVaultDoc ? 'Edit Vault Document' : 'Upload Document'}
                 </h3>
-                <form onSubmit={handleVaultDocUpload} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <form onSubmit={handleVaultDocSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="form-group">
                     <label>Document Title</label>
                     <input type="text" value={vaultDocForm.title} onChange={e => setVaultDocForm({ ...vaultDocForm, title: e.target.value })} placeholder="e.g. Aadhaar Card" required />
@@ -1515,9 +1552,9 @@ export default function AdminDashboard() {
                         type="text" 
                         readOnly 
                         value={vaultDocForm.file ? vaultDocForm.file.name : ''} 
-                        placeholder="No file chosen" 
+                        placeholder={editingVaultDoc ? "Keep current file" : "No file chosen"} 
                         style={{ flexGrow: 1, background: 'rgba(15, 23, 42, 0.4)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', outline: 'none' }} 
-                        required
+                        required={!editingVaultDoc}
                       />
                       <label className="btn btn-secondary" style={{ padding: '12px 20px', fontSize: '0.9rem', margin: 0, whiteSpace: 'nowrap', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         Browse...
@@ -1530,7 +1567,16 @@ export default function AdminDashboard() {
                       </label>
                     </div>
                   </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Upload to Vault</button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="submit" className="btn btn-primary" style={{ flexGrow: 1, justifyContent: 'center' }}>
+                      {editingVaultDoc ? 'Save Changes' : 'Upload to Vault'}
+                    </button>
+                    {editingVaultDoc && (
+                      <button type="button" className="btn btn-secondary" onClick={resetVaultDocForm} style={{ justifyContent: 'center' }}>
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </form>
               </div>
 
@@ -1733,7 +1779,10 @@ export default function AdminDashboard() {
                           <td><span style={{ background: 'rgba(99,102,241,0.15)', color: theme === 'light' ? '#4f46e5' : '#a5b4fc', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>{doc.category}</span></td>
                           <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{doc.fileName}</td>
                           <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{new Date(doc.createdAt).toLocaleDateString()}</td>
-                          <td><button className="admin-action-btn admin-action-btn-delete" onClick={() => handleDeleteVaultDoc(doc._id)} title="Delete"><Trash2 size={14} /></button></td>
+                          <td className="admin-actions-cell">
+                            <button className="admin-action-btn admin-action-btn-edit" onClick={() => startEditVaultDoc(doc)} title="Edit"><Edit2 size={14} /></button>
+                            <button className="admin-action-btn admin-action-btn-delete" onClick={() => handleDeleteVaultDoc(doc._id)} title="Delete"><Trash2 size={14} /></button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

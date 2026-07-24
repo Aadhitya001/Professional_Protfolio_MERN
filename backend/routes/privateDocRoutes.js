@@ -76,6 +76,32 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+// @desc   Update a private document
+// @route  PUT /api/private-docs/:id
+// @access Private (Admin)
+router.put('/:id', protect, upload.single('file'), async (req, res) => {
+  try {
+    const doc = await PrivateDocument.findById(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+    const { title, category } = req.body;
+    if (title !== undefined) doc.title = title;
+    if (category !== undefined) doc.category = category;
+
+    if (req.file) {
+      const base64 = req.file.buffer.toString('base64');
+      doc.fileUrl = `data:${req.file.mimetype};base64,${base64}`;
+      doc.fileName = req.file.originalname;
+      doc.fileType = req.file.mimetype;
+    }
+
+    await doc.save();
+    res.json(doc);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ─────────────────────────────────────────
 // ACCESS TOKEN ROUTES (Admin only)
 // ─────────────────────────────────────────
