@@ -33,7 +33,8 @@ const seedData = async () => {
 
       await User.create({
         username: 'Aadhi',
-        password: 'Admin786'
+        password: 'Admin786',
+        email: 'aadhi.admin@example.com'
       });
       console.log(`Admin user seeded (Username: Aadhi, Password: Admin786) in ${global.useJsonDb ? 'JSON DB' : 'MongoDB'}.`);
 

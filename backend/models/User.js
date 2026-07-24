@@ -12,6 +12,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  email: {
+    type: String,
+    default: ''
+  },
+  otp: {
+    type: String
+  },
+  otpExpires: {
+    type: Date
+  },
   isAdmin: { type: Boolean, default: false }
 }, {
   timestamps: true

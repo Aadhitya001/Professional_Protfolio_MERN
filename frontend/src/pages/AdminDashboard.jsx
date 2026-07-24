@@ -30,10 +30,14 @@ export default function AdminDashboard() {
   };
 
   const [newUsername, setNewUsername] = useState(user?.username || '');
+  const [newEmail, setNewEmail] = useState(user?.email || '');
 
   useEffect(() => {
     if (user?.username) {
       setNewUsername(user.username);
+    }
+    if (user?.email) {
+      setNewEmail(user.email);
     }
   }, [user]);
 
@@ -47,18 +51,21 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ newUsername: newUsername.trim() })
+        body: JSON.stringify({ 
+          newUsername: newUsername.trim(),
+          newEmail: newEmail.trim()
+        })
       });
       const data = await res.json();
       if (res.ok) {
         // Update user state inside AuthContext
         login(data.user);
-        triggerFeedback('Admin name updated successfully!');
+        triggerFeedback('Admin account settings updated successfully!');
       } else {
-        triggerFeedback(data.message || 'Failed to update admin name', 'error');
+        triggerFeedback(data.message || 'Failed to update credentials', 'error');
       }
     } catch {
-      triggerFeedback('Error updating admin name', 'error');
+      triggerFeedback('Error updating credentials', 'error');
     }
   };
 
@@ -1074,7 +1081,17 @@ export default function AdminDashboard() {
                   required 
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Update Admin Name</button>
+              <div className="form-group">
+                <label>Admin Email (For OTP Password Reset)</label>
+                <input 
+                  type="email" 
+                  value={newEmail} 
+                  onChange={e => setNewEmail(e.target.value)} 
+                  placeholder="New admin email" 
+                  required 
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Update Account Settings</button>
             </form>
           </div>
         </div>

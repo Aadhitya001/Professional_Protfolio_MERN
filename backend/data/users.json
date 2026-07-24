@@ -1,9 +1,10 @@
 [
   {
     "username": "Aadhi",
-    "password": "$2a$10$OBHnM0kGJDmddDxnFILuIuc63EEhA6Gut6zmoGY3X9rapY4xXR5oe",
-    "_id": "svekyf5",
-    "createdAt": "2026-07-24T01:59:18.811Z",
-    "updatedAt": "2026-07-24T01:59:18.812Z"
+    "password": "$2a$10$hn//MHu3xsFbx4WCR0srauekp40oh2Z56xrSsOj1ElC3kJjy/LZ8e",
+    "email": "aadhi.admin@example.com",
+    "_id": "g0xgjnc",
+    "createdAt": "2026-07-24T04:16:20.003Z",
+    "updatedAt": "2026-07-24T04:16:20.005Z"
   }
 ]
